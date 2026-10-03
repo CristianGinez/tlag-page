@@ -55,3 +55,14 @@ export function createServiceClient() {
   if (!serviceKey) throw new Error('Falta SUPABASE_SERVICE_ROLE_KEY en las env vars');
   return createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 }
+
+/**
+ * [Cliente SERVER como usuario] Para API routes que deben respetar RLS.
+ * Recibe el access_token del header Authorization.
+ */
+export function createUserClient(accessToken: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+  });
+}
