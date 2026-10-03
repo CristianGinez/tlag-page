@@ -3,6 +3,8 @@ import { supabase } from '@/features/auth/lib/supabase';
 import type { CloudSave, PlayerGame, SaveItem } from '../types';
 import { filterSyncable, mergeItems } from '../lib/saveSync';
 import { getPlayOrigin } from '../lib/playUrl';
+import { handleGameRequest, flushPending, type RequestDeps } from '../lib/scoreRequests';
+import { pendingKey } from '../lib/scores';
 
 export type SyncStatus = 'idle' | 'saved' | 'offline' | 'login';
 
@@ -66,6 +68,21 @@ export function useGameBridge(opts: {
     const canSave = Boolean(game.save_prefix) && !preview;
     const initData = prefetch.current ?? loadInit(game, preview);
 
+    const reqDeps: RequestDeps = {
+      slug: game.slug,
+      preview,
+      getToken: accessToken,
+      fetch: (...args) => window.fetch(...args),
+      loadPending: () => { try { return JSON.parse(localStorage.getItem(pendingKey(game.slug)) || '[]'); } catch { return []; } },
+      savePending: (list) => {
+        try {
+          if (list.length) localStorage.setItem(pendingKey(game.slug), JSON.stringify(list));
+          else localStorage.removeItem(pendingKey(game.slug));
+        } catch { /* almacenamiento no disponible */ }
+      },
+    };
+    flushPending(reqDeps);
+
     const reply = (msg: Record<string, unknown>) =>
       iframe.current?.contentWindow?.postMessage({ tl: 1, game: game.slug, ...msg }, gameOrigin);
 
@@ -120,6 +137,9 @@ export function useGameBridge(opts: {
         if (!cancelled) reply({ type: 'init', saves, user });
       } else if (d.type === 'save' && canSave) {
         upload(Array.isArray(d.items) ? d.items : []);
+      } else if (d.type === 'request' && typeof d.id === 'number') {
+        const result = await handleGameRequest(d.name, d.params, reqDeps);
+        if (!cancelled) reply({ type: 'response', id: d.id, ...result });
       } else if (d.type === 'exit') {
         onExit();
       }
