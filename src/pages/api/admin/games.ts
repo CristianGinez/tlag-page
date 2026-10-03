@@ -6,7 +6,7 @@ export const prerender = false;
 
 const EDITABLE = [
   'title', 'tagline', 'description', 'cover_url', 'controls', 'tags', 'play_url', 'version',
-  'orientation', 'status', 'display_order', 'save_prefix', 'save_exclude',
+  'orientation', 'status', 'display_order', 'save_prefix', 'save_exclude', 'boards',
 ] as const;
 
 function json(data: unknown, status = 200) {
