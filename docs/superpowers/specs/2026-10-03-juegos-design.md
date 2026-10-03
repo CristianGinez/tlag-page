@@ -50,7 +50,7 @@ public/g/
   <slug>/index.html (+ assets)
 ```
 
-URL pública de un juego: `https://juegos.tlag.online/g/<slug>/`. Se usa `/g/` (y no `/juegos/`) para que la carpeta pública no choque con la página Astro `/juegos/<slug>`: en Vercel los archivos estáticos se resuelven antes que las funciones.
+URL pública de un juego: `https://juegos.tlag.online/g/<slug>/index.html` (con `index.html` explícito, porque el servidor de desarrollo no lo resuelve en URLs de carpeta). Se usa `/g/` (y no `/juegos/`) para que la carpeta pública no choque con la página Astro `/juegos/<slug>`: en Vercel los archivos estáticos se resuelven antes que las funciones.
 
 ### Reglas en `vercel.json`
 
@@ -93,7 +93,7 @@ Las reglas por host solo se cumplen en producción: los previews son `*.vercel.a
 | `cover_url` | text | Cloudinary |
 | `controls` | text | teclado / mando / táctil |
 | `tags` | text[] | `terror`, `+13`, `pc-y-movil` |
-| `play_url` | text null | null → `${PUBLIC_GAMES_ORIGIN}/g/<slug>/` |
+| `play_url` | text null | null → `${PUBLIC_GAMES_ORIGIN}/g/<slug>/index.html` |
 | `version` | int default 1 | se añade como `?v=` |
 | `orientation` | text | `any` \| `landscape` |
 | `status` | text | `draft` \| `published` \| `hidden` |
@@ -175,7 +175,7 @@ En Lima Infecta: el `<script>` va en `src/template.html` y la línea `if (window
 
 ### API expuesta al juego
 
-- `TL.ready: Promise<void>`: se resuelve al recibir `init` o a los 3 s como máximo.
+- `TL.ready: Promise<void>`: se resuelve al recibir `init` o a los 8 s como máximo. El conector repite `hello` cada 500 ms hasta recibir `init`, y la web precarga las partidas de la nube al abrir la página para responder rápido.
 - `TL.event(name: string, data?: object)`: puntajes, logros (Fase 3).
 - `TL.exit()`: pide a la web cerrar el reproductor.
 - `TL.user: { name } | null`: disponible tras `ready`.
@@ -276,7 +276,7 @@ Visible si hay sesión (componente React que lee `$currentUser`):
 | Otro dispositivo | La nube es más nueva y se escribe en `localStorage` antes de `ready`. |
 | Ambos lados cambiaron | Gana la más reciente por clave; la anterior queda en `prev_value`. |
 | Sin internet | Guardado local; se sube en el siguiente `save` correcto o en la siguiente partida. |
-| La web no responde en 3 s | `ready` se resuelve y el juego arranca con lo local. |
+| La web no responde en 8 s | `ready` se resuelve y el juego arranca con lo local. |
 
 ### Privacidad
 
@@ -349,7 +349,7 @@ Se añade **vitest** para la lógica pura (URL del juego, filtrado de claves sin
 - `pnpm test`, `pnpm astro check` y `pnpm build` sin errores.
 - En local (web en `localhost:4321`, juegos en `127.0.0.1:4321`): el iframe carga, el `postMessage` funciona y, en la consola del juego, `localStorage` no contiene claves `sb-*`.
 - En producción, tras el merge (las reglas por host no existen en previews):
-  - `juegos.tlag.online/g/lima-infecta/` carga.
+  - `juegos.tlag.online/g/lima-infecta/index.html` carga.
   - `juegos.tlag.online/` redirige.
   - `www.tlag.online/g/lima-infecta/` redirige a la página `/juegos/lima-infecta`.
   - El iframe carga (sin bloqueo por `X-Frame-Options`/CSP).
