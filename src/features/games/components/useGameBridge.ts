@@ -78,11 +78,12 @@ export function useGameBridge(opts: {
         return;
       }
       try {
+        const body = JSON.stringify({ game: game.slug, items: syncable });
         const res = await fetch('/api/games/saves', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ game: game.slug, items: syncable }),
-          keepalive: true, // sobrevive al desmontaje / navegación
+          body,
+          keepalive: body.length < 60_000, // tope de 64 KiB en keepalive
         });
         if (!res.ok) throw new Error(String(res.status));
         retry = 0;
