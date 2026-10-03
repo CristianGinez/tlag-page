@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { createServiceClient } from '@/features/auth/lib/supabase';
 import { invalidateCache } from '@/shared/lib/cache';
+import { validateBoards } from '@/features/games/lib/scores';
 
 export const prerender = false;
 
@@ -32,6 +33,15 @@ function pickEditable(body: Record<string, unknown>) {
   return out;
 }
 
+/** Valida `boards` si viene en el body; devuelve false si es inválido. */
+function applyBoards(body: Record<string, unknown>, out: Record<string, unknown>): boolean {
+  if (!('boards' in body)) return true;
+  const boards = validateBoards(body.boards);
+  if (!boards) return false;
+  out.boards = boards;
+  return true;
+}
+
 async function invalidate(slug: string) {
   await Promise.all([invalidateCache('games:all'), invalidateCache(`games:${slug}`)]);
 }
@@ -53,6 +63,7 @@ export const POST: APIRoute = async (context) => {
   if (typeof body.title !== 'string' || !body.title.trim()) return json({ error: 'Falta el título' }, 400);
 
   const row: Record<string, unknown> = { ...pickEditable(body), slug };
+  if (!applyBoards(body, row)) return json({ error: 'Marcadores inválidos' }, 400);
   if (row.status === 'published') row.published_at = new Date().toISOString();
 
   const { data, error } = await createServiceClient().from('games').insert(row).select('*').single();
@@ -70,6 +81,7 @@ export const PATCH: APIRoute = async (context) => {
 
   const service = createServiceClient();
   const patch: Record<string, unknown> = { ...pickEditable(body), updated_at: new Date().toISOString() };
+  if (!applyBoards(body, patch)) return json({ error: 'Marcadores inválidos' }, 400);
   if (patch.status === 'published') {
     const { data: current } = await service.from('games').select('published_at').eq('slug', slug).maybeSingle();
     if (current && !current.published_at) patch.published_at = new Date().toISOString();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatTime, pendingKey, isSubmission, addPending, MAX_PENDING } from './scores';
+import { formatTime, pendingKey, isSubmission, addPending, MAX_PENDING, validateBoards } from './scores';
 
 const sub = (t: number) => ({ board: 'normal', time_ms: t, rank: 'A', stats: {} });
 
@@ -26,5 +26,31 @@ describe('pendientes', () => {
     expect(out).toHaveLength(MAX_PENDING);
     expect(out[0].time_ms).toBe(3000);
     expect(out[4].time_ms).toBe(7000);
+  });
+});
+
+describe('validateBoards', () => {
+  const lima = [
+    { id: 'facil', label: 'Fácil', min_s: 600, max_s: 36000 },
+    { id: 'normal', label: 'Normal', min_s: 600, max_s: 36000 },
+    { id: 'clasico', label: 'Clásico', min_s: 600, max_s: 36000 },
+  ];
+  const b = (o: object) => [{ ...lima[0], ...o }];
+  it('tablas de Lima válidas', () => { expect(validateBoards(lima)).toEqual(lima); });
+  it('[] → []', () => { expect(validateBoards([])).toEqual([]); });
+  it('max_s 0 → null', () => { expect(validateBoards(b({ max_s: 0 }))).toBeNull(); });
+  it('600.5 → null', () => { expect(validateBoards(b({ max_s: 600.5 }))).toBeNull(); });
+  it('max_s 3000000 → null', () => { expect(validateBoards(b({ max_s: 3_000_000 }))).toBeNull(); });
+  it('id duplicado → null', () => { expect(validateBoards([lima[0], lima[0]])).toBeNull(); });
+  it('min_s >= max_s → null', () => { expect(validateBoards(b({ min_s: 36000 }))).toBeNull(); });
+  it('no array → null', () => { expect(validateBoards({})).toBeNull(); expect(validateBoards(null)).toBeNull(); });
+  it('id, label inválidos o más de 10 → null', () => {
+    expect(validateBoards(b({ id: 'NO VALE' }))).toBeNull();
+    expect(validateBoards(b({ label: '' }))).toBeNull();
+    expect(validateBoards(b({ label: 'x'.repeat(41) }))).toBeNull();
+    expect(validateBoards(Array.from({ length: 11 }, (_, i) => ({ ...lima[0], id: `b${i}` })))).toBeNull();
+  });
+  it('normaliza descartando campos extra', () => {
+    expect(validateBoards(b({ extra: 1 }))).toEqual([lima[0]]);
   });
 });
