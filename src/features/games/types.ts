@@ -18,6 +18,7 @@ export interface Game {
   plays: number;
   save_prefix: string | null;
   save_exclude: string[];
+  boards: GameBoard[];
   created_at: string;
   updated_at: string;
 }
@@ -42,3 +43,16 @@ export interface CloudSave {
   updatedAt: string;
   hasPrev: boolean;
 }
+
+export interface GameBoard { id: string; label: string; min_s: number; max_s: number }
+
+export interface ScoreRow {
+  pos: number; name: string; avatar: string | null; time_ms: number; rank: string; created_at: string; is_me: boolean;
+}
+
+export interface MyScores {
+  boards: Record<string, { time_ms: number; rank: string; pos: number }>;
+  history: { board: string; time_ms: number; rank: string; stats: Record<string, unknown>; created_at: string }[];
+}
+
+export interface ScoreSubmission { board: string; time_ms: number; rank: string; stats: Record<string, unknown> }
