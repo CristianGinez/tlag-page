@@ -1,0 +1,26 @@
+---
+import type { Game } from '../types';
+import { optimizeUrl } from '@/shared/lib/imageOptimizer';
+import { isNewGame } from '../lib/saveSync';
+
+interface Props { game: Game }
+const { game } = Astro.props;
+const cover = optimizeUrl(game.cover_url ?? '', { width: 640 });
+const isNew = isNewGame(game.published_at);
+---
+
+<a
+  href={`/juegos/${game.slug}`}
+  class="group relative block rounded-2xl overflow-hidden border border-white/10 bg-[#0a0a0a] hover:border-red-600/60 transition-all"
+>
+  <div class="aspect-video overflow-hidden">
+    <img src={cover} alt={game.title} loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+  </div>
+  {isNew && (
+    <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-widest">NUEVO</span>
+  )}
+  <div class="p-4">
+    <h2 class="font-orbitron font-bold text-white text-lg">{game.title}</h2>
+    {game.tagline && <p class="text-gray-400 text-sm mt-1">{game.tagline}</p>}
+  </div>
+</a>
