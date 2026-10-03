@@ -5,6 +5,7 @@
   var PARENTS = ['https://www.tlag.online', 'http://localhost:4321'];
   var READY_TIMEOUT = 8000; // la pantalla de carga del juego cubre la espera (arranque en frío de la API)
   var HELLO_EVERY = 500;
+  var REQUEST_TIMEOUT = 8000;
   var FLUSH_DELAY = 2000;
   var LEGACY_AT = 1; // guardados previos al conector: más viejos que cualquier guardado en la nube
 
@@ -15,13 +16,24 @@
     var setT = o.setTimeout || root.setTimeout, clearT = o.clearTimeout || root.clearTimeout;
     var META = '__tl_meta:' + game;
     var origSet = proto.setItem, origGet = proto.getItem;
-    var parentOrigin = null, queue = {}, flushTimer = null, resolveReady, bootedLocal = false;
+    var parentOrigin = null, queue = {}, flushTimer = null, resolveReady, bootedLocal = false, reqSeq = 0, pendingReq = {};
 
     var api = {
       ready: new Promise(function (r) { resolveReady = r; }),
       user: null,
       event: function (name, data) { post({ type: 'event', name: String(name), data: data == null ? null : data }); },
       exit: function () { post({ type: 'exit' }); },
+      request: function (name, params) {
+        return api.ready.then(function () {
+          if (!parentOrigin) throw new Error('offline');
+          return new Promise(function (resolve, reject) {
+            var id = ++reqSeq;
+            var timer = setT(function () { delete pendingReq[id]; reject(new Error('timeout')); }, REQUEST_TIMEOUT);
+            pendingReq[id] = { resolve: resolve, reject: reject, timer: timer };
+            post({ type: 'request', id: id, name: String(name), params: params == null ? null : params });
+          });
+        });
+      },
       _onMessage: onMessage,
       _flush: flush,
     };
@@ -75,6 +87,15 @@
       var d = e.data;
       if (!d || d.tl !== 1) return;
       if (d.type === 'flush') { if (e.origin === parentOrigin) flush(); return; }
+      if (d.type === 'response') {
+        if (e.origin !== parentOrigin) return;
+        var pr = pendingReq[d.id];
+        if (!pr) return;
+        delete pendingReq[d.id];
+        clearT(pr.timer);
+        if (d.ok) pr.resolve(d.data); else pr.reject(new Error(String(d.error || 'error')));
+        return;
+      }
       if (d.type !== 'init' || parentOrigin) return;
       parentOrigin = e.origin;
       api.user = d.user || null;
@@ -120,7 +141,7 @@
   root.__tlCreateConnector = createConnector;
   if (!root.document) return; // tests en Node
 
-  var noop = { ready: Promise.resolve(), user: null, event: function () {}, exit: function () {} };
+  var noop = { ready: Promise.resolve(), user: null, event: function () {}, exit: function () {}, request: function () { return Promise.reject(new Error('offline')); } };
   var script = root.document.currentScript;
   var game = script && script.getAttribute('data-game');
   var prefix = script && script.getAttribute('data-prefix');

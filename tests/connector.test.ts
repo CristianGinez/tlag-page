@@ -164,4 +164,46 @@ describe('connector', () => {
     const calls = parent.postMessage.mock.calls.filter((a) => a[0].type === 'event' || a[0].type === 'exit');
     expect(calls.map((a) => [a[0].type, a[1]])).toEqual([['event', SITE], ['exit', SITE]]);
   });
+
+  it('request: envía y resuelve con la respuesta del padre', async () => {
+    const { c, init, parent } = setup();
+    init({});
+    const p = c.request('leaderboard', { board: 'normal' });
+    await Promise.resolve(); await Promise.resolve();
+    const msg = parent.postMessage.mock.calls.map((a: any[]) => a[0]).find((m: any) => m.type === 'request');
+    expect(msg).toMatchObject({ tl: 1, type: 'request', name: 'leaderboard', params: { board: 'normal' } });
+    c._onMessage({ origin: SITE, source: parent, data: { tl: 1, type: 'response', id: msg.id, ok: true, data: { rows: [] } } });
+    await expect(p).resolves.toEqual({ rows: [] });
+  });
+
+  it('request: respuesta con ok:false rechaza con el error', async () => {
+    const { c, init, parent } = setup();
+    init({});
+    const p = c.request('borrarTodo');
+    await Promise.resolve(); await Promise.resolve();
+    const msg = parent.postMessage.mock.calls.map((a: any[]) => a[0]).find((m: any) => m.type === 'request');
+    c._onMessage({ origin: SITE, source: parent, data: { tl: 1, type: 'response', id: msg.id, ok: false, error: 'unknown_request' } });
+    await expect(p).rejects.toThrow('unknown_request');
+  });
+
+  it('request: ignora respuestas de otro origen, otra ventana o id desconocido y vence a los 8 s', async () => {
+    const { c, init, parent } = setup();
+    init({});
+    const p = c.request('myScores');
+    const caught = p.catch((e: Error) => e.message);
+    await Promise.resolve(); await Promise.resolve();
+    const msg = parent.postMessage.mock.calls.map((a: any[]) => a[0]).find((m: any) => m.type === 'request');
+    c._onMessage({ origin: 'https://evil.example', source: parent, data: { tl: 1, type: 'response', id: msg.id, ok: true, data: 1 } });
+    c._onMessage({ origin: SITE, source: {}, data: { tl: 1, type: 'response', id: msg.id, ok: true, data: 2 } });
+    c._onMessage({ origin: SITE, source: parent, data: { tl: 1, type: 'response', id: 999, ok: true, data: 3 } });
+    await vi.advanceTimersByTimeAsync(8000);
+    await expect(caught).resolves.toBe('timeout');
+  });
+
+  it('request: sin init rechaza con offline al vencer ready', async () => {
+    const { c } = setup();
+    const caught = c.request('leaderboard', { board: 'normal' }).catch((e: Error) => e.message);
+    await vi.advanceTimersByTimeAsync(8000);
+    await expect(caught).resolves.toBe('offline');
+  });
 });

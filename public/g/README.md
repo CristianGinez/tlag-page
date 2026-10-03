@@ -24,3 +24,4 @@ Cada carpeta es un juego publicado. Se sirve desde `https://juegos.tlag.online/g
 4. Guardar solo en `localStorage`, con claves que empiecen por el prefijo. Máximo 256 KB por clave y 20 claves.
 5. Opcional: `TL.event('score', { board, score })`, `TL.event('completed')`, `TL.exit()`.
 6. Sin modos debug activables por URL en el build publicado.
+7. Datos online (marcadores): `await TL.request('leaderboard', { board })`, `await TL.request('myScores')`, `await TL.request('submitScore', { board, time_ms, rank, stats })`. Rechaza con `offline`/`timeout` si no hay conexión: el juego debe seguir funcionando.
