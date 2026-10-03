@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/features/auth/lib/supabase';
 import type { Game } from '../types';
 import { GamePlayer } from './GamePlayer';
+import { formatTime } from '../lib/scores';
 
 async function authHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -15,7 +16,7 @@ type Draft = Partial<Game> & { slug: string; title: string };
 const EMPTY: Draft = {
   slug: '', title: '', tagline: '', description: '', cover_url: '', controls: '', tags: [],
   play_url: '', version: 1, orientation: 'any', status: 'draft', display_order: 99,
-  save_prefix: '', save_exclude: [],
+  save_prefix: '', save_exclude: [], boards: [],
 };
 
 const input = 'w-full bg-black border border-gray-700 rounded px-2 py-1.5 text-white text-sm focus:border-white/40 outline-none';
@@ -27,6 +28,7 @@ export function GamesManager() {
   const [isNew, setIsNew] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [scoresFor, setScoresFor] = useState<string | null>(null);
 
   async function load() {
     const res = await fetch('/api/admin/games', { headers: await authHeaders() });
@@ -88,10 +90,13 @@ export function GamesManager() {
             <GamePlayer game={g} preview label="Probar" />
             <button onClick={() => bumpVersion(g)} className="px-3 py-1.5 text-xs border border-white/20 rounded cursor-pointer">+ Versión</button>
             <button onClick={() => { setEditing({ ...g }); setIsNew(false); }} className="px-3 py-1.5 text-xs border border-white/20 rounded cursor-pointer">Editar</button>
+            <button onClick={() => setScoresFor(scoresFor === g.slug ? null : g.slug)} className="px-3 py-1.5 text-xs border border-white/20 rounded cursor-pointer">Marcas</button>
             <button onClick={() => remove(g)} className="px-3 py-1.5 text-xs border border-red-500/40 text-red-400 rounded cursor-pointer">Borrar</button>
           </div>
         ))}
       </div>
+
+      {scoresFor && <RecentScores slug={scoresFor} />}
 
       {editing && (
         <div className="p-6 rounded-xl border border-white/10 bg-black/60 space-y-4">
@@ -119,6 +124,19 @@ export function GamesManager() {
             <div><label className={lbl}>Versión</label><input type="number" min={1} className={input} value={editing.version ?? 1} onChange={(e) => set({ version: Number(e.target.value) })} /></div>
             <div><label className={lbl}>Prefijo de guardado</label><input className={input} value={editing.save_prefix ?? ''} onChange={(e) => set({ save_prefix: e.target.value })} /></div>
             <div><label className={lbl}>Claves sin sincronizar (coma)</label><input className={input} value={(editing.save_exclude ?? []).join(', ')} onChange={(e) => set({ save_exclude: list(e.target.value) })} /></div>
+            <div className="md:col-span-2">
+              <label className={lbl}>Marcadores (tiempo mínimo / máximo en segundos)</label>
+              {(editing.boards ?? []).length === 0 && <p className="text-xs text-gray-500">Este juego no tiene marcadores.</p>}
+              {(editing.boards ?? []).map((b, i) => (
+                <div key={b.id} className="flex items-center gap-2 mb-2">
+                  <span className="w-24 text-sm text-white">{b.label}</span>
+                  <input type="number" min={1} className={input} value={b.min_s}
+                    onChange={(e) => set({ boards: (editing.boards ?? []).map((x, j) => (j === i ? { ...x, min_s: Number(e.target.value) } : x)) })} />
+                  <input type="number" min={1} className={input} value={b.max_s}
+                    onChange={(e) => set({ boards: (editing.boards ?? []).map((x, j) => (j === i ? { ...x, max_s: Number(e.target.value) } : x)) })} />
+                </div>
+              ))}
+            </div>
           </div>
           <div className="flex gap-3">
             <button onClick={save} disabled={saving} className="px-5 py-2 bg-white text-black font-bold rounded cursor-pointer disabled:opacity-50">{saving ? 'Guardando…' : 'Guardar'}</button>
@@ -126,6 +144,42 @@ export function GamesManager() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RecentScores({ slug }: { slug: string }) {
+  const [scores, setScores] = useState<{ id: number; name: string; board: string; time_ms: number; rank: string; created_at: string }[] | null>(null);
+
+  async function load() {
+    const res = await fetch(`/api/admin/games/scores?game=${encodeURIComponent(slug)}`, { headers: await authHeaders() });
+    if (res.ok) setScores((await res.json()).scores);
+  }
+  useEffect(() => { load(); }, [slug]);
+
+  async function remove(id: number) {
+    if (!confirm('¿Borrar esta marca del marcador?')) return;
+    const res = await fetch(`/api/admin/games/scores?id=${id}`, { method: 'DELETE', headers: await authHeaders() });
+    if (res.ok) load();
+  }
+
+  if (!scores) return <p className="text-gray-500 text-sm">Cargando marcas…</p>;
+  if (!scores.length) return <p className="text-gray-500 text-sm">Sin marcas todavía.</p>;
+  return (
+    <div className="p-4 rounded-xl border border-white/10 bg-black/40">
+      <h3 className="font-orbitron text-white text-sm mb-3">Marcas recientes · {slug}</h3>
+      <ul className="space-y-1">
+        {scores.map((s) => (
+          <li key={s.id} className="flex items-center gap-3 text-sm">
+            <span className="flex-1 text-white truncate">{s.name}</span>
+            <span className="text-gray-400">{s.board}</span>
+            <span className="font-mono text-white">{formatTime(s.time_ms)}</span>
+            <span className="text-yellow-400 w-4">{s.rank}</span>
+            <span className="text-gray-500 text-xs">{new Date(s.created_at).toLocaleString('es')}</span>
+            <button onClick={() => remove(s.id)} className="px-2 py-0.5 text-xs border border-red-500/40 text-red-400 rounded cursor-pointer">Borrar</button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

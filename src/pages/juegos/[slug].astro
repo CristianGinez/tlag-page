@@ -4,6 +4,7 @@ import Navbar from '@/layouts/Navbar.astro';
 import Footer from '@/layouts/Footer.astro';
 import { GamePlayer } from '@/features/games/components/GamePlayer';
 import { GameSaveStatus } from '@/features/games/components/GameSaveStatus';
+import { LeaderboardPanel } from '@/features/games/components/LeaderboardPanel';
 import { getGame } from '@/features/games/lib/gamesData';
 import { optimizeUrl } from '@/shared/lib/imageOptimizer';
 import { ogJuego } from '@/shared/lib/og';
@@ -51,6 +52,7 @@ const cover = optimizeUrl(game.cover_url ?? '', { width: 1600 });
     <section class="container mx-auto px-6 py-12 grid gap-10 md:grid-cols-3">
       <div class="md:col-span-2">
         {game.description && <p class="text-gray-300 leading-relaxed whitespace-pre-line">{game.description}</p>}
+        {game.boards?.length > 0 && <LeaderboardPanel client:only="react" slug={game.slug} boards={game.boards} />}
       </div>
       <aside class="space-y-6">
         {game.controls && (
