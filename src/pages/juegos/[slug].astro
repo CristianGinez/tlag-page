@@ -3,6 +3,7 @@ import Layout from '@/layouts/Layout.astro';
 import Navbar from '@/layouts/Navbar.astro';
 import Footer from '@/layouts/Footer.astro';
 import { GamePlayer } from '@/features/games/components/GamePlayer';
+import { GameSaveStatus } from '@/features/games/components/GameSaveStatus';
 import { getGame } from '@/features/games/lib/gamesData';
 import { optimizeUrl } from '@/shared/lib/imageOptimizer';
 import { ogJuego } from '@/shared/lib/og';
@@ -58,7 +59,9 @@ const cover = optimizeUrl(game.cover_url ?? '', { width: 1600 });
             <p class="text-gray-300 whitespace-pre-line">{game.controls}</p>
           </div>
         )}
-        <div id="game-extra"></div>
+        <div id="game-extra">
+          {game.save_prefix && <GameSaveStatus client:only="react" slug={game.slug} />}
+        </div>
       </aside>
     </section>
   </main>

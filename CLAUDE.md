@@ -11,9 +11,10 @@ pnpm dev           # Start dev server (port 4321)
 pnpm build         # Production build (Vercel adapter)
 pnpm preview       # Preview production build
 pnpm astro check   # TypeScript type-check all .astro/.ts/.tsx files
+pnpm test          # vitest (lógica de juegos y conector)
 ```
 
-No test suite or linter is configured. `astro check` + `pnpm build` are the verification steps.
+`astro check` + `pnpm test` + `pnpm build` are the verification steps.
 
 UI copy, comments and commit messages are mostly in Spanish (TeamLag is a Spanish-speaking gaming community).
 
@@ -38,7 +39,7 @@ Import rules (from `src/features/README.md`):
 3. `@/shared/*` never imports from features.
 4. Pages only orchestrate — no business logic.
 
-Features: `awards`, `parsec-league`, `achievements` (badges), `community` (VIPs), `news` (live streams + changelog feed), `chatbot`, `auth`, `admin`, `bot-admin` (Discord bot dashboard), `profile`.
+Features: `awards`, `parsec-league`, `achievements` (badges), `community` (VIPs), `news` (live streams + changelog feed), `chatbot`, `auth`, `admin`, `bot-admin` (Discord bot dashboard), `profile`, `games` (catálogo, reproductor y guardado en la nube).
 
 Path aliases: `@/*`, `@/features/*`, `@/shared/*`, `@/layouts/*` → `src/...`.
 
@@ -84,6 +85,8 @@ CSP and other headers are defined in **`vercel.json`**. When adding any new exte
 - Chatbot: `POST /api/chat` → `features/chatbot/api/chat.ts` → Gemini; rate-limited 10 req/min/IP via Upstash.
 - OG images: `/og/default.png`, `/og/categoria/[id].png`, `/og/evento/[slug].png` (`@vercel/og`, helpers in `shared/lib/og*.ts`).
 - Design specs and implementation plans live in `docs/superpowers/{specs,plans}/`.
+- Juegos: builds en `public/g/<slug>/`, servidos desde `juegos.tlag.online` (alias del mismo proyecto; reglas por host en `vercel.json`). La web los monta en un iframe aislado (`GamePlayer`), y `public/g/_tl/connect.js` sincroniza `localStorage` del juego con `game_saves` por `postMessage` (`useGameBridge`). Orígenes en `PUBLIC_SITE_ORIGIN` / `PUBLIC_GAMES_ORIGIN`; en local, web en `localhost:4321` y juegos en `127.0.0.1:4321`. Reglas para juegos nuevos en `public/g/README.md`. Migraciones SQL en `supabase/migrations/`.
+- Tests: `pnpm test` (vitest) cubre la lógica pura de juegos y el conector.
 
 ### Environment variables
 
