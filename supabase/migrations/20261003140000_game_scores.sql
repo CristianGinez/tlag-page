@@ -21,9 +21,8 @@ create index if not exists game_scores_user_idx  on public.game_scores (user_id,
 
 alter table public.game_scores enable row level security;
 drop policy if exists "game_scores_public_read" on public.game_scores;
-create policy "game_scores_public_read" on public.game_scores for select using (true);
--- Sin políticas de escritura: solo entra por submit_game_score (security definer).
-revoke insert, update, delete on public.game_scores from anon, authenticated;
+-- Acceso solo vía SECURITY DEFINER RPCs (admin API usa service role).
+revoke all on public.game_scores from anon, authenticated;
 
 create or replace function public.submit_game_score(
   p_game text, p_board text, p_time_ms int, p_rank text, p_stats jsonb
@@ -54,8 +53,8 @@ begin
   end if;
 
   if p_time_ms is null
-     or p_time_ms < (v_b->>'min_s')::int * 1000
-     or p_time_ms > (v_b->>'max_s')::int * 1000 then
+     or p_time_ms < coalesce((v_b->>'min_s')::int, 600) * 1000
+     or p_time_ms > coalesce((v_b->>'max_s')::int, 36000) * 1000 then
     raise exception 'time_out_of_range';
   end if;
 
