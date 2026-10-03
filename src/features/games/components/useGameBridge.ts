@@ -87,6 +87,11 @@ export function useGameBridge(opts: {
         retry = 0;
         if (!cancelled) setStatus('saved');
         reply({ type: 'saved', keys: syncable.map((i) => i.key) });
+        if (pending.length > 0) {
+          const again = pending;
+          pending = [];
+          upload(again);
+        }
       } catch {
         if (cancelled) return;
         setStatus('offline');
@@ -102,14 +107,14 @@ export function useGameBridge(opts: {
       }
     }
 
-    let initSent = false;
+    let initFor: MessageEventSource | null = null;
     async function onMessage(e: MessageEvent) {
       if (e.origin !== gameOrigin || !iframe.current || e.source !== iframe.current.contentWindow) return;
       const d = e.data;
       if (!d || d.tl !== 1) return;
       if (d.type === 'hello') {
-        if (initSent) return; // el conector repite hello hasta recibir init
-        initSent = true;
+        if (initFor === e.source) return; // el conector repite hello hasta recibir init
+        initFor = e.source;
         const { saves, user } = await initData;
         if (!cancelled) reply({ type: 'init', saves, user });
       } else if (d.type === 'save' && canSave) {
