@@ -81,4 +81,27 @@ describe('flushPending', () => {
     expect(t.calls).toHaveLength(0);
     expect(t.store).toEqual([sub]);
   });
+  it('una marca añadida durante el vaciado sobrevive', async () => {
+    const a = { ...sub, time_ms: 600_000 }, extra = { ...sub, time_ms: 777_000 };
+    const t = deps();
+    t.d.savePending([a]);
+    const base = t.d.fetch;
+    t.d.fetch = (async (...args: Parameters<typeof fetch>) => {
+      t.d.savePending([...(t.d.loadPending() as typeof a[]), extra]);
+      return base(...args);
+    }) as typeof fetch;
+    await flushPending(t.d);
+    expect(t.store).toEqual([extra]);
+  });
+  it('dos vaciados simultáneos publican cada marca una sola vez', async () => {
+    const t = deps();
+    t.d.savePending([{ ...sub, time_ms: 600_000 }, { ...sub, time_ms: 650_000 }]);
+    await Promise.all([flushPending(t.d), flushPending(t.d)]);
+    expect(t.calls).toHaveLength(2);
+    expect(t.store).toEqual([]);
+  });
+  it('getToken que rechaza no hace rechazar flushPending', async () => {
+    const t = deps({ getToken: async () => { throw new Error('x'); } });
+    await expect(flushPending(t.d)).resolves.toBeUndefined();
+  });
 });

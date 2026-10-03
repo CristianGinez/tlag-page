@@ -79,21 +79,31 @@ export async function handleGameRequest(name: unknown, params: unknown, deps: Re
   }
 }
 
-/** Publica las marcas pendientes. Quita las aceptadas (2xx) y las inválidas (400/404); conserva el resto. */
+const flushing = new Set<string>();
+const keyOf = (i: ScoreSubmission) => `${i.board}|${i.time_ms}|${i.rank}|${JSON.stringify(i.stats)}`;
+
+/** Publica las marcas pendientes. Quita las aceptadas (2xx) y las inválidas (400/404); conserva el resto. Nunca lanza. */
 export async function flushPending(deps: RequestDeps): Promise<void> {
-  if (deps.preview) return;
-  const token = await deps.getToken();
-  if (!token) return;
-  const list = Array.isArray(deps.loadPending()) ? (deps.loadPending() as unknown[]).filter(isSubmission) : [];
-  if (!list.length) return;
-  const remaining: ScoreSubmission[] = [];
-  for (const item of list) {
-    try {
-      const res = await postScore(deps, token, item);
-      if (!(res.ok || res.status === 400 || res.status === 404)) remaining.push(item);
-    } catch {
-      remaining.push(item);
+  if (deps.preview || flushing.has(deps.slug)) return;
+  flushing.add(deps.slug);
+  try {
+    const token = await deps.getToken();
+    if (!token) return;
+    const read = () => (Array.isArray(deps.loadPending()) ? (deps.loadPending() as unknown[]).filter(isSubmission) : []);
+    const list = read();
+    if (!list.length) return;
+    const done = new Set<string>();
+    for (const item of list) {
+      try {
+        const res = await postScore(deps, token, item);
+        if (res.ok || res.status === 400 || res.status === 404) done.add(keyOf(item));
+      } catch { /* se conserva */ }
     }
+    // Relee: puede haber marcas nuevas guardadas durante el vaciado
+    deps.savePending(read().filter((i) => !done.has(keyOf(i))));
+  } catch {
+    /* nunca lanza */
+  } finally {
+    flushing.delete(deps.slug);
   }
-  deps.savePending(remaining);
 }

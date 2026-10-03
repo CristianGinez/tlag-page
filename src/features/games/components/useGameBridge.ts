@@ -81,7 +81,7 @@ export function useGameBridge(opts: {
         } catch { /* almacenamiento no disponible */ }
       },
     };
-    flushPending(reqDeps);
+    flushPending(reqDeps).catch(() => {});
 
     const reply = (msg: Record<string, unknown>) =>
       iframe.current?.contentWindow?.postMessage({ tl: 1, game: game.slug, ...msg }, gameOrigin);
