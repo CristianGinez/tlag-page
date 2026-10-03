@@ -24,13 +24,18 @@ export const GET: APIRoute = async ({ request, url }) => {
   if (!SLUG.test(game) || !BOARD_RE.test(board)) return json({ error: 'Datos inválidos' }, 400);
 
   const token = bearer(request);
-  try {
-    if (token) {
-      // Con sesión no se cachea: is_me depende del usuario
+  if (token) {
+    // Con sesión no se cachea: is_me depende del usuario
+    try {
       const { data, error } = await createUserClient(token).rpc('get_game_leaderboard', { p_game: game, p_board: board, p_limit: 10 });
-      if (error) throw error;
-      return json({ rows: data ?? [] });
+      if (!error) return json({ rows: data ?? [] });
+      console.error('[scores] leaderboard (token):', error);
+    } catch (err) {
+      console.error('[scores] leaderboard (token):', err);
     }
+    // Token caducado o inválido: se cae al camino anónimo (is_me: false)
+  }
+  try {
     const rows = await getCached({ key: `scores:${game}:${board}`, ttl: 60 }, async () => {
       const { data, error } = await supabase.rpc('get_game_leaderboard', { p_game: game, p_board: board, p_limit: 10 });
       if (error) throw error;
@@ -58,6 +63,9 @@ export const POST: APIRoute = async ({ request }) => {
   if (typeof game !== 'string' || !SLUG.test(game) || typeof board !== 'string' || !BOARD_RE.test(board)
       || typeof time_ms !== 'number' || !Number.isFinite(time_ms) || typeof rank !== 'string') {
     return json({ error: 'Datos inválidos' }, 400);
+  }
+  if (!Number.isInteger(Math.round(time_ms)) || time_ms <= 0 || time_ms > 2147483647) {
+    return json({ error: 'time_out_of_range' }, 400);
   }
 
   const { data, error } = await client.rpc('submit_game_score', {
