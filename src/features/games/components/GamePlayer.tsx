@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { PlayerGame } from '../types';
 import { getPlayUrl } from '../lib/playUrl';
+import { useGameBridge } from './useGameBridge';
 
 interface Props {
   game: PlayerGame;
@@ -30,6 +31,8 @@ export function GamePlayer({ game, preview = false, label = 'JUGAR' }: Props) {
     setLoaded(false);
     setFailed(false);
   }
+
+  const syncStatus = useGameBridge({ open, iframe: iframeRef, game, preview, onExit: close });
 
   function launch() {
     setAskRotate(false);
@@ -125,6 +128,14 @@ export function GamePlayer({ game, preview = false, label = 'JUGAR' }: Props) {
           >
             Reintentar
           </button>
+        </div>
+      )}
+
+      {syncStatus !== 'idle' && (
+        <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/70 text-white/80 text-xs pointer-events-none">
+          {syncStatus === 'saved' && '☁ Guardado'}
+          {syncStatus === 'offline' && 'Sin conexión · guardado local'}
+          {syncStatus === 'login' && 'Inicia sesión para guardar en la nube'}
         </div>
       )}
 
