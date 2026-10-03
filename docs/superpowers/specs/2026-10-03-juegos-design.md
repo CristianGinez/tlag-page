@@ -43,35 +43,40 @@ Cada fase se puede desplegar por separado y deja el sitio funcionando.
 ### Archivos
 
 ```
-public/juegos/
+public/g/
   README.md                  reglas para crear juegos compatibles (ver §3)
   _tl/connect.js             el conector
   lima-infecta/index.html    build de Lima Infecta
   <slug>/index.html (+ assets)
 ```
 
-URL pública de un juego: `https://juegos.tlag.online/juegos/<slug>/`.
+URL pública de un juego: `https://juegos.tlag.online/g/<slug>/`. Se usa `/g/` (y no `/juegos/`) para que la carpeta pública no choque con la página Astro `/juegos/<slug>`: en Vercel los archivos estáticos se resuelven antes que las funciones.
 
 ### Reglas en `vercel.json`
 
-Los archivos de `public/` los sirve la CDN sin pasar por el middleware de Astro, así que el control por host se hace en `vercel.json` con `has: [{ "type": "host", "value": "juegos.tlag.online" }]`:
+Los archivos de `public/` los sirve la CDN sin pasar por el middleware de Astro, así que el control por host se hace en `vercel.json` con `has` / `missing` sobre el host `juegos.tlag.online`:
 
 - **Host `juegos.tlag.online`:**
-  - Cualquier ruta que no empiece por `/juegos/` → redirección a `https://www.tlag.online/juegos`.
-  - Headers propios para `/juegos/(.*)`:
-    - CSP del juego: `frame-ancestors https://www.tlag.online`, `default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:`, `connect-src 'self'`.
+  - Cualquier ruta que no empiece por `/g/` → redirección a `https://www.tlag.online/juegos`.
+  - Headers para `/g/` (excepto `/g/_tl/`):
+    - CSP del juego: `default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self'; frame-ancestors https://www.tlag.online; object-src 'none'; base-uri 'self'`.
     - Sin `X-Frame-Options`.
     - `Cache-Control: public, max-age=31536000, immutable` (las URLs llevan `?v=`).
-  - Para `/juegos/_tl/connect.js`: `Cache-Control: public, max-age=300`, porque el conector se actualiza sin cambiar de URL.
-- **Host `www.tlag.online`:**
-  - `/juegos/<slug>/index.html` y cualquier archivo dentro de `/juegos/<slug>/` → redirección a la página `/juegos/<slug>`. Así el juego nunca se ejecuta en el origen con sesión.
+  - Para `/g/_tl/(.*)`: la misma CSP y `Cache-Control: public, max-age=300`, porque el conector se actualiza sin cambiar de URL.
+- **Resto de hosts (`www`):**
+  - `/g/:slug/:path*` → redirección a la página `/juegos/:slug`. Así el juego nunca se ejecuta en el origen con sesión.
+  - La regla global de headers lleva `missing: [{ "type": "host", "value": "juegos.tlag.online" }]`. Vercel aplica **todas** las reglas de headers que coinciden, así que sin esto el `X-Frame-Options: DENY` global bloquearía el iframe.
   - La CSP global añade `https://juegos.tlag.online` a `frame-src`.
 
-Hay que verificar con un preview deploy que la regla de headers del host `juegos.` no se fusiona con la cabecera global (`X-Frame-Options: DENY`, `frame-ancestors 'none'`). Si Vercel combina ambas, la cabecera global se limita con `missing: [{ type: "host", value: "juegos.tlag.online" }]`.
+### Orígenes configurables
 
-### Ruta Astro vs. carpeta pública
+Las reglas por host solo se cumplen en producción: los previews son `*.vercel.app` y el desarrollo local es `localhost:4321`. Por eso los orígenes no se escriben fijos en el código de la web:
 
-La página `src/pages/juegos/[slug].astro` y la carpeta `public/juegos/<slug>/` comparten prefijo. En `www`, `/juegos/<slug>` (sin barra final ni archivo) lo resuelve Astro, y `/juegos/<slug>/...` lo redirige `vercel.json`. Hay que confirmar en el preview que `/juegos/lima-infecta` llega a la página Astro y no a `public/`. Si hay conflicto, la carpeta pública pasa a `public/g/<slug>/` y la URL del juego a `juegos.tlag.online/g/<slug>/`; el resto del diseño no cambia.
+- `PUBLIC_SITE_ORIGIN` (por defecto `https://www.tlag.online`).
+- `PUBLIC_GAMES_ORIGIN` (por defecto `https://juegos.tlag.online`).
+- **En desarrollo:** la web corre en `http://localhost:4321` y los juegos se cargan desde `http://127.0.0.1:4321`. Son orígenes distintos para el navegador, así que el aislamiento y el `postMessage` se prueban de verdad en local.
+- **El conector** (archivo estático) tiene una lista blanca de orígenes padre: `https://www.tlag.online`, `http://localhost:4321`.
+- **En previews de Vercel** no hay subdominio de juegos. La verificación de las reglas por host se hace en producción tras el merge.
 
 ---
 
@@ -88,7 +93,7 @@ La página `src/pages/juegos/[slug].astro` y la carpeta `public/juegos/<slug>/` 
 | `cover_url` | text | Cloudinary |
 | `controls` | text | teclado / mando / táctil |
 | `tags` | text[] | `terror`, `+13`, `pc-y-movil` |
-| `play_url` | text null | null → `https://juegos.tlag.online/juegos/<slug>/` |
+| `play_url` | text null | null → `${PUBLIC_GAMES_ORIGIN}/g/<slug>/` |
 | `version` | int default 1 | se añade como `?v=` |
 | `orientation` | text | `any` \| `landscape` |
 | `status` | text | `draft` \| `published` \| `hidden` |
@@ -118,7 +123,7 @@ RPC `increment_game_plays(p_slug text)`: `security definer`, solo incrementa `pl
 - `/juegos/[slug]`:
   - Hero con portada, título, tagline y tags, y botón JUGAR.
   - Descripción y controles; "Tu partida" (Fase 2) y ranking (Fase 3).
-  - 404 si no existe o no está publicado. Los admins ven los `draft`: la página detecta admin en el cliente y pide la ficha a `/api/admin/games?slug=`.
+  - 404 si no existe o no está publicado. Los `draft` se prueban desde `/admin/juegos` con el botón **Probar**, que abre el mismo reproductor sin pasar por la página pública.
 - `/og/juego/[slug].png`: imagen OG con portada y título, con los helpers existentes de `shared/lib/og.ts`.
 - `/admin/juegos`: CRUD con el patrón de `/admin/vips` (comprobación de admin en el cliente, Bearer token e `invalidateCache('games:all')` + `games:<slug>`).
 - `/api/admin/games`: GET, POST, PATCH y DELETE con `requireAdmin` (tabla `admin_users`).
@@ -132,9 +137,9 @@ RPC `increment_game_plays(p_slug text)`: `security definer`, solo incrementa `pl
      - `src = getPlayUrl(game) + '?v=' + version`
      - `allow="fullscreen; gamepad; autoplay"`
      - `sandbox="allow-scripts allow-same-origin allow-pointer-lock"`. Es seguro porque el origen es `juegos.tlag.online`.
-  3. Intenta `requestFullscreen()` sobre la capa y `screen.orientation.lock('landscape')` si `orientation = landscape`. Si falla (iPhone), se queda la capa fija.
+  3. La capa fija ya cubre toda la ventana. Un botón ⛶ opcional pide la pantalla completa real (`requestFullscreen()`); no se pide automáticamente porque en pantalla completa el navegador se queda con la tecla Esc, y Lima Infecta la usa para pausar.
 - Si `orientation = landscape` y el dispositivo está en vertical, muestra una pantalla "Gira tu teléfono" antes de arrancar.
-- Salir: botón ✕ semitransparente en una esquina, o mantener Esc 1 s. El Esc corto pasa al juego.
+- Salir: botón ✕ semitransparente en una esquina, o `TL.exit()` desde el juego. No se usa Esc: mientras el juego tiene el foco, las teclas llegan al iframe y la web no las ve.
 - Al cerrar o en `astro:before-swap`: se elimina el iframe del DOM, se sale de la pantalla completa y se restaura el scroll.
 - Mientras está abierto: `overflow: hidden` en `body` y `display: none` en los contenedores `.adsbygoogle`.
 - Carga: portada + spinner hasta el `load` del iframe. A los 20 s, "No se pudo cargar" + Reintentar.
@@ -151,19 +156,22 @@ RPC `increment_game_plays(p_slug text)`: `security definer`, solo incrementa `pl
 
 ## 3. Conector (Fase 2)
 
-Archivo `public/juegos/_tl/connect.js`, script clásico sin dependencias de ~3 KB. Cada juego lo carga antes de su propio código:
+Archivo `public/g/_tl/connect.js`, script clásico sin dependencias de ~3 KB. Cada juego lo carga antes de su propio código:
 
 ```html
-<script src="/juegos/_tl/connect.js" data-game="lima-infecta" data-prefix="tl_lima_"></script>
+<script src="/g/_tl/connect.js" data-game="lima-infecta" data-prefix="tl_lima_"></script>
 ```
 
-El único cambio en el código del juego es esperar `TL.ready` antes de leer `localStorage`:
+El único cambio en el código del juego es esperar `TL.ready` antes de leer `localStorage`, **dentro de una función async** (los builds `iife` de esbuild no admiten `await` de nivel superior):
 
 ```js
-await (window.TL && window.TL.ready);
+async function boot() {
+  if (window.TL) await window.TL.ready;
+  // ... resto del arranque
+}
 ```
 
-En Lima Infecta: el `<script>` va en `src/template.html` y el `await` al inicio de `src/main.js`. Luego, recompilar.
+En Lima Infecta: el `<script>` va en `src/template.html` y la línea `if (window.TL) await window.TL.ready;` al inicio de `boot()` en `src/main.js`, que ya es async. Luego, recompilar.
 
 ### API expuesta al juego
 
@@ -188,15 +196,15 @@ Todos los mensajes llevan `{ tl: 1, type, ... }`.
 ### Comportamiento del conector
 
 - Fuera de un iframe (`window.parent === window`): resuelve `ready` de inmediato y no hace nada más.
-- Al cargar: envía `hello` a `parent` con targetOrigin `https://www.tlag.online`.
-- Al recibir `init` (validando `event.origin === 'https://www.tlag.online'`): por cada clave de la nube con `at` más reciente que la local, escribe `localStorage` y actualiza `__tl_meta`. Después resuelve `ready`.
-- Envuelve `Storage.prototype.setItem` y `removeItem`. Para las claves de `localStorage` que empiezan por `data-prefix` y no son `__tl_meta`: registra `at = Date.now()` en `__tl_meta` y encola el cambio. La cola se envía en un `save` cada 2 s (debounce) y en `pagehide`.
-- `__tl_meta` es un JSON `{ [key]: at }` en `localStorage`, separado por juego (`__tl_meta:<game>`).
+- Al cargar: envía `hello` a `parent` una vez por cada origen de la lista blanca (el navegador solo lo entrega al que coincide). Al llegar `init`, recuerda `event.origin` y desde ahí solo envía a ese origen.
+- Al recibir `init` (validando que `event.origin` está en la lista blanca): por cada clave de la nube con `at` más reciente que la local, la escribe con el `setItem` **original** (no el envuelto, para que no se reencole) y guarda en la meta el `at` **de la nube**, no la hora actual. Después resuelve `ready` y encola las claves locales más nuevas que la nube.
+- Envuelve `Storage.prototype.setItem` (solo cuando `this === localStorage`). Para las claves que empiezan por `data-prefix`: registra `at = Date.now()` en la meta y encola el cambio. La cola se envía en un `save` cada 2 s (debounce) y en `pagehide`. Los borrados (`removeItem`) no se sincronizan.
+- La meta es un JSON `{ [key]: at }` guardado en la clave `__tl_meta:<game>` de `localStorage`.
 - La lista `save_exclude` la aplica la web, que es quien conoce la ficha. El conector envía todo lo que tenga el prefijo.
 
 ### Lado web (`GamePlayer.tsx`)
 
-- Solo acepta mensajes con `event.origin === 'https://juegos.tlag.online'` **y** `event.source === iframe.contentWindow`.
+- Solo acepta mensajes con `event.origin === PUBLIC_GAMES_ORIGIN` **y** `event.source === iframe.contentWindow`.
 - Antes de crear el iframe, si hay sesión, hace `GET /api/games/saves?game=<slug>` para tener `init` listo.
 - Al llegar `hello`:
   - Compara las fechas locales con las de la nube.
@@ -210,8 +218,8 @@ Todos los mensajes llevan `{ tl: 1, type, ... }`.
 Las reglas para juegos nuevos, para pegarlas en el prompt de la IA:
 
 1. Un único `index.html` o una carpeta autocontenida, sin peticiones a otros dominios.
-2. Cargar `/juegos/_tl/connect.js` con `data-game` y `data-prefix`.
-3. Hacer `await TL.ready` antes de leer guardados.
+2. Cargar `/g/_tl/connect.js` con `data-game` y `data-prefix`.
+3. Hacer `if (window.TL) await window.TL.ready;` dentro de la función async de arranque, antes de leer guardados.
 4. Guardar solo en `localStorage`, con claves que empiecen por el prefijo; máx. 256 KB por clave y 20 claves.
 5. Opcional: `TL.event('score', …)`, `TL.event('completed')`, `TL.exit()`.
 6. Que no exponga modos debug en el build publicado.
@@ -246,7 +254,7 @@ Usa el cliente de Supabase **con el token del usuario** (header `Authorization`)
   - el usuario no supera 20 claves en ese juego;
   - rate limit de 30 PUT/min por usuario (Upstash).
   
-  Para cada item, solo escribe si `at` es más reciente que el `client_at` guardado. Al escribir, mueve el `value` anterior a `prev_value`.
+  Toda la escritura la hace **una función SQL** `upsert_game_saves(p_game, p_items)` (security invoker, usa `auth.uid()`), para que no haya carreras entre pestañas o dispositivos. Por cada item: valida prefijo, exclusiones, tamaño y el límite de 20 claves; solo escribe si `at` es más reciente que el `client_at` guardado; al escribir, mueve el `value` anterior a `prev_value`. Devuelve las claves escritas y las rechazadas.
 - `POST ?game=<slug>&action=restore`: intercambia `value` ↔ `prev_value` en todas las claves del juego que tengan `prev_value`.
 - `DELETE ?game=<slug>`: borra las filas del usuario para ese juego.
 
@@ -336,13 +344,14 @@ Además, el build publicado de Lima Infecta no debe exponer `window.__TL` (hoy s
 
 ## Verificación
 
-No hay tests automatizados en el repo. Por fase:
+Se añade **vitest** para la lógica pura (URL del juego, filtrado de claves sincronizables y el conector, probado con dobles de `localStorage` y `postMessage`). Por fase:
 
-- `pnpm astro check` y `pnpm build` sin errores.
-- En un preview deploy:
-  - `juegos.tlag.online/juegos/lima-infecta/` carga.
+- `pnpm test`, `pnpm astro check` y `pnpm build` sin errores.
+- En local (web en `localhost:4321`, juegos en `127.0.0.1:4321`): el iframe carga, el `postMessage` funciona y, en la consola del juego, `localStorage` no contiene claves `sb-*`.
+- En producción, tras el merge (las reglas por host no existen en previews):
+  - `juegos.tlag.online/g/lima-infecta/` carga.
   - `juegos.tlag.online/` redirige.
-  - `www.tlag.online/juegos/lima-infecta/index.html` redirige a la página.
+  - `www.tlag.online/g/lima-infecta/` redirige a la página `/juegos/lima-infecta`.
   - El iframe carga (sin bloqueo por `X-Frame-Options`/CSP).
   - En la consola del juego, `localStorage` no contiene claves `sb-*`.
 - Reproductor: PC (Chrome, Firefox) y móvil (Android Chrome, iPhone Safari). Comprobar pantalla completa o capa fija, orientación, audio tras JUGAR, que al salir y al navegar no queda audio, y que no se ven anuncios encima.
