@@ -71,10 +71,10 @@ export function useGameBridge(opts: {
 
     async function upload(items: SaveItem[]) {
       const syncable = filterSyncable(items, game.save_prefix, game.save_exclude ?? []);
-      if (!syncable.length || cancelled) return;
+      if (!syncable.length) return; // tras cerrar aún se sube lo ya recibido
       const token = await accessToken();
       if (!token) {
-        if (!loginHinted) { loginHinted = true; setStatus('login'); }
+        if (!loginHinted && !cancelled) { loginHinted = true; setStatus('login'); }
         return;
       }
       try {
@@ -82,12 +82,13 @@ export function useGameBridge(opts: {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ game: game.slug, items: syncable }),
+          keepalive: true, // sobrevive al desmontaje / navegación
         });
         if (!res.ok) throw new Error(String(res.status));
         retry = 0;
         if (!cancelled) setStatus('saved');
-        reply({ type: 'saved', keys: syncable.map((i) => i.key) });
-        if (pending.length > 0) {
+        if (!cancelled) reply({ type: 'saved', keys: syncable.map((i) => i.key) });
+        if (pending.length > 0 && !cancelled) {
           const again = pending;
           pending = [];
           upload(again);
@@ -107,14 +108,13 @@ export function useGameBridge(opts: {
       }
     }
 
-    let initFor: MessageEventSource | null = null;
     async function onMessage(e: MessageEvent) {
       if (e.origin !== gameOrigin || !iframe.current || e.source !== iframe.current.contentWindow) return;
       const d = e.data;
       if (!d || d.tl !== 1) return;
       if (d.type === 'hello') {
-        if (initFor === e.source) return; // el conector repite hello hasta recibir init
-        initFor = e.source;
+        // Se responde a cada hello: e.source no cambia si el juego recarga dentro del iframe,
+        // y el conector acepta solo el primer init por carga de página.
         const { saves, user } = await initData;
         if (!cancelled) reply({ type: 'init', saves, user });
       } else if (d.type === 'save' && canSave) {

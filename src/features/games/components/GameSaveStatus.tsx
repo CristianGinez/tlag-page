@@ -49,17 +49,23 @@ export function GameSaveStatus({ slug }: { slug: string }) {
   async function restore() {
     if (!confirm('¿Restaurar la versión anterior de tu partida en la nube?')) return;
     setBusy(true);
-    await call('POST', `/api/games/saves?game=${encodeURIComponent(slug)}&action=restore`);
-    await load();
-    setBusy(false);
+    try {
+      await call('POST', `/api/games/saves?game=${encodeURIComponent(slug)}&action=restore`);
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function wipe() {
-    if (!confirm('¿Borrar tu partida en la nube? El guardado de este navegador se mantiene.')) return;
+    if (!confirm('¿Borrar tu partida en la nube? Si vuelves a jugar en este navegador, el guardado local se volverá a subir.')) return;
     setBusy(true);
-    await call('DELETE', `/api/games/saves?game=${encodeURIComponent(slug)}`);
-    await load();
-    setBusy(false);
+    try {
+      await call('DELETE', `/api/games/saves?game=${encodeURIComponent(slug)}`);
+      await load();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

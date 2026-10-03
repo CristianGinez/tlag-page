@@ -15,7 +15,7 @@
     var setT = o.setTimeout || root.setTimeout, clearT = o.clearTimeout || root.clearTimeout;
     var META = '__tl_meta:' + game;
     var origSet = proto.setItem, origGet = proto.getItem;
-    var parentOrigin = null, queue = {}, flushTimer = null, resolveReady;
+    var parentOrigin = null, queue = {}, flushTimer = null, resolveReady, bootedLocal = false;
 
     var api = {
       ready: new Promise(function (r) { resolveReady = r; }),
@@ -73,7 +73,9 @@
     function onMessage(e) {
       if (!e || e.source !== parent || parents.indexOf(e.origin) < 0) return;
       var d = e.data;
-      if (!d || d.tl !== 1 || d.type !== 'init' || parentOrigin) return;
+      if (!d || d.tl !== 1) return;
+      if (d.type === 'flush') { if (e.origin === parentOrigin) flush(); return; }
+      if (d.type !== 'init' || parentOrigin) return;
       parentOrigin = e.origin;
       api.user = d.user || null;
 
@@ -81,12 +83,12 @@
       for (k in saves) {
         var s = saves[k];
         if (!tracked(k) || !s || typeof s.value !== 'string' || typeof s.at !== 'number') continue;
-        if (!(m[k] >= s.at)) {
+        if (!bootedLocal && !(m[k] >= s.at)) {
           origSet.call(storage, k, s.value); // original: no se reencola
           m[k] = s.at;                       // fecha de la nube, no la actual
         }
       }
-      writeMeta(m);
+      if (!bootedLocal) writeMeta(m);
 
       for (k in m) {
         if (!tracked(k)) continue;
@@ -111,7 +113,7 @@
       setT(sendHello, HELLO_EVERY);
     }
     sendHello();
-    setT(function () { resolveReady(); }, READY_TIMEOUT);
+    setT(function () { if (!parentOrigin) bootedLocal = true; resolveReady(); }, READY_TIMEOUT);
     return api;
   }
 

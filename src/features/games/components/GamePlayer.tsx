@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { PlayerGame } from '../types';
-import { getPlayUrl } from '../lib/playUrl';
+import { getPlayUrl, getPlayOrigin } from '../lib/playUrl';
 import { useGameBridge } from './useGameBridge';
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
 }
 
 const LOAD_TIMEOUT_MS = 20_000;
+const FLUSH_GRACE_MS = 400; // margen para que el último guardado llegue al puente antes de desmontar
 
 export function GamePlayer({ game, preview = false, label = 'JUGAR' }: Props) {
   const [open, setOpen] = useState(false);
@@ -24,13 +25,34 @@ export function GamePlayer({ game, preview = false, label = 'JUGAR' }: Props) {
 
   const playUrl = getPlayUrl(game);
 
-  function close() {
+  const closeTimer = useRef<number | undefined>(undefined);
+
+  function closeNow() {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = undefined;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     setOpen(false);
     setAskRotate(false);
     setLoaded(false);
     setFailed(false);
   }
+
+  /** Pide al conector que suba ya el guardado pendiente. */
+  function requestFlush() {
+    iframeRef.current?.contentWindow?.postMessage(
+      { tl: 1, type: 'flush', game: game.slug },
+      getPlayOrigin(game),
+    );
+  }
+
+  /** Cierre normal: pide el flush y desmonta tras un breve margen (el puente sigue escuchando). */
+  function close() {
+    if (closeTimer.current !== undefined) return;
+    requestFlush();
+    closeTimer.current = window.setTimeout(closeNow, FLUSH_GRACE_MS);
+  }
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   const syncStatus = useGameBridge({ open, iframe: iframeRef, game, preview, onExit: close });
 
@@ -70,7 +92,7 @@ export function GamePlayer({ game, preview = false, label = 'JUGAR' }: Props) {
   useEffect(() => {
     if (!open) return;
     document.documentElement.classList.add('tl-playing');
-    const onSwap = () => close();
+    const onSwap = () => { requestFlush(); closeNow(); };
     document.addEventListener('astro:before-swap', onSwap);
     return () => {
       document.documentElement.classList.remove('tl-playing');

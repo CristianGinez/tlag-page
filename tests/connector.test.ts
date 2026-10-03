@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+// @ts-ignore -- sin @types/node en el proyecto; vitest lo resuelve
 import { readFileSync } from 'node:fs';
 
 const code = readFileSync('public/g/_tl/connect.js', 'utf8');
@@ -116,6 +117,43 @@ describe('connector', () => {
     expect(done).toBe(true);
     c.event('score', { score: 1 });
     expect(parent.postMessage.mock.calls.filter((a) => a[0].type === 'event')).toHaveLength(0);
+  });
+
+  it('flush del padre envía el guardado pendiente al instante; de otro origen no hace nada', () => {
+    const { storage, init, sent, c, parent } = setup();
+    init({});
+    clock = 2000;
+    storage.setItem('tl_lima_slot_2', 'ultimo');
+    const flushMsg = (origin: string, source: unknown = parent) =>
+      c._onMessage({ origin, source, data: { tl: 1, type: 'flush' } });
+    flushMsg('https://evil.example');
+    flushMsg(SITE, {});
+    expect(sent('save')).toHaveLength(0);
+    flushMsg(SITE);
+    expect(sent('save')).toEqual([
+      expect.objectContaining({ items: [{ key: 'tl_lima_slot_2', value: 'ultimo', at: 2000 }] }),
+    ]);
+  });
+
+  it('init tardío tras el plazo de 8 s: no pisa el almacenamiento, pero sube lo local más nuevo', async () => {
+    const { storage, init, sent, c } = setup({
+      tl_lima_slot_0: 'local',
+      tl_lima_slot_1: 'local1',
+      '__tl_meta:lima': JSON.stringify({ tl_lima_slot_0: 900, tl_lima_slot_1: 100 }),
+    });
+    await vi.advanceTimersByTimeAsync(8000);
+    init({
+      tl_lima_slot_0: { value: 'nube0', at: 500 },
+      tl_lima_slot_1: { value: 'nube1', at: 700 },
+      tl_lima_slot_2: { value: 'nube2', at: 300 },
+    });
+    expect(c.user).toEqual({ name: 'Lag' });
+    expect(storage.getItem('tl_lima_slot_0')).toBe('local');
+    expect(storage.getItem('tl_lima_slot_1')).toBe('local1');
+    expect(storage.getItem('tl_lima_slot_2')).toBeNull();
+    expect(sent('save')).toEqual([
+      expect.objectContaining({ items: [{ key: 'tl_lima_slot_0', value: 'local', at: 900 }] }),
+    ]);
   });
 
   it('event y exit se envían al origen del init', () => {

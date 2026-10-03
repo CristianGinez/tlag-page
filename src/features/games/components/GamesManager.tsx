@@ -57,7 +57,7 @@ export function GamesManager() {
   }
 
   async function remove(game: Game) {
-    if (!confirm(`¿Borrar "${game.title}" del catálogo? Los archivos en public/g/ no se tocan.`)) return;
+    if (!confirm(`¿Borrar "${game.title}" del catálogo? Se borrarán también las partidas guardadas de todos los jugadores. Los archivos en public/g/ no se tocan.`)) return;
     const res = await fetch(`/api/admin/games?slug=${encodeURIComponent(game.slug)}`, { method: 'DELETE', headers: await authHeaders() });
     if (res.ok) await load();
   }
