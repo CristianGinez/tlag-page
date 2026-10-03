@@ -1,0 +1,165 @@
+---
+// Portada de evento: lanzamiento de TEAMLAG: Lima Infecta.
+// Para cambiar de evento, crea otro hero en esta carpeta y cámbialo en src/pages/index.astro.
+import { GamePlayer } from '@/features/games/components/GamePlayer';
+import type { Game, PlayerGame, ScoreRow } from '@/features/games/types';
+import { formatTime } from '@/features/games/lib/scores';
+
+interface Props { game: Game; record: ScoreRow | null; recordBoard: string }
+const { game, record, recordBoard } = Astro.props;
+
+const playerGame: PlayerGame = {
+  slug: game.slug, title: game.title, cover_url: game.cover_url, play_url: game.play_url,
+  version: game.version, orientation: game.orientation, save_prefix: game.save_prefix, save_exclude: game.save_exclude,
+};
+---
+
+<section class="lima-hero" aria-labelledby="lima-title">
+  <img class="lima-hero__scene" src="/img/juegos/lima-infecta/hero.jpg" alt="" fetchpriority="high" />
+  <div class="lima-hero__rain" aria-hidden="true"></div>
+  <div class="lima-hero__shade" aria-hidden="true"></div>
+  <div class="lima-hero__boot" aria-hidden="true"></div>
+
+  <div class="lima-hero__body">
+    <p class="lima-hero__file">Expediente LPX-04. Centro de Lima, 3:12 a. m.</p>
+
+    <h1 id="lima-title" class="lima-hero__title">
+      <span class="lima-hero__stamp">TEAMLAG</span>
+      <span class="lima-hero__name">Lima Infecta</span>
+    </h1>
+
+    <p class="lima-hero__lede">
+      Lag solo tenía que entregar un pedido. Ahora el Centro de Lima está infectado y la única salida cruza la ciudad.
+      Survival horror de cámaras fijas, gratis y en el navegador.
+    </p>
+
+    <div class="lima-hero__actions">
+      <GamePlayer client:visible game={playerGame} label="Jugar ahora" />
+      <a href={`/juegos/${game.slug}`} class="lima-hero__more">Ver ficha y marcadores</a>
+    </div>
+  </div>
+
+  <p class="lima-hero__record">
+    {record
+      ? <>Récord en {recordBoard}: <strong>{formatTime(record.time_ms)}</strong>, {record.name}</>
+      : <>Nadie ha escapado todavía.</>}
+  </p>
+</section>
+
+<style>
+  .lima-hero {
+    --asphalt: #07080a;
+    --paper: #e2d2b0;
+    --blood: #c81818;
+    --sodium: #c8a050;
+    --drizzle: #8a806c;
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    align-items: end;
+    overflow: hidden;
+    background: var(--asphalt);
+    color: var(--paper);
+    isolation: isolate;
+  }
+  .lima-hero__scene {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 45%;
+    filter: brightness(1.9) contrast(1.1) saturate(1.15);
+    z-index: -3;
+  }
+  .lima-hero__shade {
+    position: absolute; inset: 0; z-index: -1;
+    background:
+      linear-gradient(to top, var(--asphalt) 0%, rgba(7, 8, 10, .75) 28%, rgba(7, 8, 10, 0) 62%),
+      linear-gradient(to right, rgba(7, 8, 10, .8), rgba(7, 8, 10, 0) 55%);
+  }
+  /* Garúa: dos capas de líneas finas a distinta velocidad */
+  .lima-hero__rain {
+    position: absolute; inset: -20% 0 0; z-index: -2; pointer-events: none; opacity: .35;
+    background-image:
+      repeating-linear-gradient(100deg, transparent 0 46px, rgba(200, 210, 230, .35) 46px 47px, transparent 47px 120px),
+      repeating-linear-gradient(98deg, transparent 0 80px, rgba(200, 210, 230, .2) 80px 81px, transparent 81px 170px);
+    background-size: 300px 220px, 420px 300px;
+    animation: lima-rain .7s linear infinite;
+  }
+  @keyframes lima-rain {
+    to { background-position: -40px 220px, -50px 300px; }
+  }
+  /* Arranque: fundido desde negro como el boot del juego */
+  .lima-hero__boot {
+    position: absolute; inset: 0; z-index: 5; background: #000; pointer-events: none;
+    animation: lima-boot 1.6s ease-out .2s forwards;
+  }
+  @keyframes lima-boot { to { opacity: 0; visibility: hidden; } }
+
+  .lima-hero__body {
+    width: min(100% - 2rem, 76rem);
+    margin: 0 auto;
+    padding: 9rem 0 6.5rem;
+    max-width: 76rem;
+  }
+  .lima-hero__file {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: .95rem;
+    color: var(--sodium);
+    margin-bottom: 1.25rem;
+  }
+  .lima-hero__title { margin: 0; line-height: .82; }
+  .lima-hero__stamp {
+    display: inline-block;
+    font-family: Anton, Impact, sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    letter-spacing: .06em;
+    color: var(--blood);
+    transform: rotate(-2.6deg);
+    text-shadow: 0 0 22px rgba(255, 40, 20, .35);
+    margin-bottom: 1rem;
+  }
+  .lima-hero__name {
+    display: block;
+    font-family: Anton, Impact, sans-serif;
+    font-weight: 400;
+    font-size: clamp(4.2rem, 13vw, 11.5rem);
+    letter-spacing: -.01em;
+    text-transform: uppercase;
+    color: var(--paper);
+    text-shadow: 0 6px 40px rgba(0, 0, 0, .7);
+  }
+  .lima-hero__lede {
+    max-width: 34rem;
+    margin: 1.6rem 0 2.2rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.02rem, 1.4vw, 1.18rem);
+    line-height: 1.65;
+    color: rgba(226, 210, 176, .86);
+  }
+  .lima-hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 2rem; }
+  .lima-hero__more {
+    font-family: Georgia, serif;
+    color: var(--paper);
+    text-decoration: underline;
+    text-decoration-color: var(--sodium);
+    text-underline-offset: .35em;
+    text-decoration-thickness: 1px;
+  }
+  .lima-hero__more:hover { color: #fff; text-decoration-thickness: 2px; }
+  .lima-hero__more:focus-visible { outline: 2px solid var(--sodium); outline-offset: 4px; }
+  .lima-hero__record {
+    position: absolute; right: max(1rem, calc((100% - 76rem) / 2)); bottom: 1.75rem;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: .9rem;
+    color: var(--drizzle);
+    margin: 0;
+  }
+  .lima-hero__record strong { color: var(--paper); font-weight: 400; }
+
+  @media (max-width: 640px) {
+    .lima-hero__body { padding: 7rem 0 5.5rem; }
+    .lima-hero__record { left: 1rem; right: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lima-hero__rain { animation: none; }
+    .lima-hero__boot { animation: none; display: none; }
+  }
+</style>
