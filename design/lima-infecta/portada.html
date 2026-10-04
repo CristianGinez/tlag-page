@@ -4,191 +4,207 @@
 <meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&display=block" rel="stylesheet">
 <style>
-  html, body { margin: 0; padding: 0; background: #000; }
-  .poster {
-    position: relative; width: 1600px; height: 900px; overflow: hidden;
-    background:
-      radial-gradient(ellipse 60% 55% at 74% 70%, rgba(214, 140, 40, .55), rgba(120, 50, 10, .25) 45%, transparent 75%),
-      radial-gradient(ellipse 40% 30% at 20% 0%, rgba(80, 90, 120, .25), transparent 70%),
-      linear-gradient(#0a0b10 0%, #12101a 45%, #1d120c 78%, #0a0706 100%);
-    font-family: Georgia, serif;
-  }
-  .rain {
-    position: absolute; inset: 0; pointer-events: none; opacity: .5;
-    background-image:
-      repeating-linear-gradient(104deg, transparent 0 38px, rgba(210, 220, 240, .28) 38px 39px, transparent 39px 97px),
-      repeating-linear-gradient(101deg, transparent 0 63px, rgba(210, 220, 240, .16) 63px 64px, transparent 64px 151px);
-  }
-  .grain {
-    position: absolute; inset: 0; opacity: .18; mix-blend-mode: overlay;
-    background-image: radial-gradient(rgba(255,255,255,.5) 1px, transparent 1px);
-    background-size: 3px 3px;
-  }
-  svg.city { position: absolute; left: 0; bottom: 0; width: 1600px; height: 900px; }
-  .title {
-    position: absolute; left: 92px; top: 118px; color: #e2d2b0;
-  }
+  html, body { margin: 0; background: #000; }
+  .poster { position: relative; width: 1600px; height: 900px; overflow: hidden; background: #050304; }
+  svg { position: absolute; inset: 0; width: 1600px; height: 900px; }
+  .title { position: absolute; left: 78px; top: 70px; color: #f0e2c4; }
   .stamp {
-    display: inline-block; font-family: Anton, Impact, sans-serif; font-size: 64px; letter-spacing: 3px;
-    color: #c81818; transform: rotate(-3deg); text-shadow: 0 0 28px rgba(255, 40, 20, .45);
-    margin-left: 6px;
+    display: inline-block; font-family: Anton, Impact, sans-serif; font-size: 58px; letter-spacing: 3px;
+    color: #d81a14; transform: rotate(-3deg); text-shadow: 0 0 26px rgba(255, 60, 20, .6), 0 2px 0 #300;
   }
   .name {
-    font-family: Anton, Impact, sans-serif; font-size: 248px; line-height: .84; text-transform: uppercase;
-    letter-spacing: -2px; margin-top: 10px;
-    text-shadow: 0 10px 50px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.6);
+    font-family: Anton, Impact, sans-serif; font-size: 196px; line-height: .84; text-transform: uppercase;
+    letter-spacing: -1px; margin-top: 6px;
+    text-shadow: 0 0 40px rgba(255, 120, 30, .35), 0 8px 40px rgba(0, 0, 0, .9);
   }
-  .sub {
-    font-family: 'Special Elite', monospace; font-size: 30px; color: #c8a050; margin-top: 26px; margin-left: 8px;
+  .sub { display: inline-block; font-family: 'Special Elite', monospace; font-size: 28px; color: #ffcf8a; margin: 22px 0 0 6px; padding: 4px 12px; background: rgba(5,2,2,.7); }
+  .tag {
+    position: absolute; right: 70px; bottom: 54px; text-align: right;
+    font-family: 'Special Elite', monospace; font-size: 26px; color: #f0e2c4; text-shadow: 0 2px 12px #000;
   }
-  .tape {
-    position: absolute; left: -80px; width: 1800px; height: 66px;
-    background: #e3bd17;
-    box-shadow: 0 8px 22px rgba(0,0,0,.6);
-    display: flex; align-items: center; gap: 46px; white-space: nowrap; overflow: hidden;
-    font-family: Anton, Impact, sans-serif; font-size: 38px; letter-spacing: 3px; color: #111;
-    background-image: repeating-linear-gradient(135deg, rgba(0,0,0,.06) 0 14px, transparent 14px 28px);
+  .tag b { font-family: Anton, Impact, sans-serif; font-weight: 400; color: #ffb45a; font-size: 34px; letter-spacing: 1px; }
+  .rain {
+    position: absolute; inset: 0; opacity: .22; pointer-events: none;
+    background-image: repeating-linear-gradient(104deg, transparent 0 44px, rgba(255, 220, 190, .5) 44px 45px, transparent 45px 109px);
   }
-  .tape span { flex: none; }
-  .tape i { flex: none; width: 34px; height: 34px; background: #111; transform: rotate(45deg); }
-  .tape-1 { top: 742px; transform: rotate(-5deg); }
-  .tape-2 { top: 812px; transform: rotate(3deg); opacity: .92; filter: brightness(.82); }
-  .seal {
-    position: absolute; right: 86px; top: 70px; width: 210px; height: 210px; border-radius: 50%;
-    border: 6px double rgba(200, 24, 24, .85); color: rgba(220, 40, 30, .9);
-    display: grid; place-items: center; text-align: center; transform: rotate(12deg);
-    font-family: 'Special Elite', monospace; font-size: 22px; line-height: 1.25;
-    box-shadow: inset 0 0 0 10px transparent;
-  }
-  .seal b { display: block; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: 40px; letter-spacing: 2px; }
 </style>
 </head>
 <body>
-<div class="poster" id="poster">
-  <svg class="city" viewBox="0 0 1600 900" aria-hidden="true">
+<div class="poster">
+  <svg viewBox="0 0 1600 900" id="art">
     <defs>
-      <radialGradient id="lamp" cx="50%" cy="50%" r="50%">
-        <stop offset="0" stop-color="#ffd27a" stop-opacity=".95"/>
-        <stop offset=".35" stop-color="#e09a35" stop-opacity=".45"/>
-        <stop offset="1" stop-color="#e09a35" stop-opacity="0"/>
-      </radialGradient>
-      <linearGradient id="wet" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#2a1a0e"/>
-        <stop offset="1" stop-color="#070505"/>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#07040a"/>
+        <stop offset=".35" stop-color="#2a0806"/>
+        <stop offset=".62" stop-color="#9a2a08"/>
+        <stop offset=".78" stop-color="#e2620f"/>
+        <stop offset="1" stop-color="#2a0a04"/>
       </linearGradient>
+      <radialGradient id="blaze" cx="62%" cy="70%" r="55%">
+        <stop offset="0" stop-color="#ffcf6a" stop-opacity=".9"/>
+        <stop offset=".35" stop-color="#ff7a1a" stop-opacity=".55"/>
+        <stop offset="1" stop-color="#ff4a10" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#fff2b0"/>
+        <stop offset=".25" stop-color="#ffb02a"/>
+        <stop offset=".6" stop-color="#ff4a0a"/>
+        <stop offset="1" stop-color="#ff2a00" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="street" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#3a1206"/>
+        <stop offset=".25" stop-color="#140604"/>
+        <stop offset="1" stop-color="#020101"/>
+      </linearGradient>
+      <filter id="blur18"><feGaussianBlur stdDeviation="18"/></filter>
+      <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+      <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
 
-    <!-- Catedral de Lima: dos torres con campanarios y cúpulas -->
-    <g fill="#08070a">
-      <rect x="930" y="430" width="96" height="330"/>
-      <rect x="944" y="372" width="68" height="70"/>
-      <path d="M944 372 Q978 318 1012 372 Z"/>
-      <rect x="974" y="300" width="8" height="40"/>
-      <rect x="966" y="312" width="24" height="6"/>
-      <rect x="1250" y="430" width="96" height="330"/>
-      <rect x="1264" y="372" width="68" height="70"/>
-      <path d="M1264 372 Q1298 318 1332 372 Z"/>
-      <rect x="1294" y="300" width="8" height="40"/>
-      <rect x="1286" y="312" width="24" height="6"/>
-      <rect x="1026" y="500" width="224" height="260"/>
-      <path d="M1026 500 L1138 440 L1250 500 Z"/>
-      <path d="M1098 760 L1098 640 Q1138 590 1178 640 L1178 760 Z" fill="#1c1208"/>
-    </g>
-    <!-- ventanas de campanario con luz tenue -->
-    <g fill="#c8862a" opacity=".55">
-      <rect x="966" y="392" width="10" height="26" rx="5"/><rect x="980" y="392" width="10" height="26" rx="5"/>
-      <rect x="1286" y="392" width="10" height="26" rx="5"/><rect x="1300" y="392" width="10" height="26" rx="5"/>
-    </g>
+    <rect width="1600" height="900" fill="url(#sky)"/>
+    <rect width="1600" height="900" fill="url(#blaze)"/>
+    <g id="smoke" filter="url(#blur18)"></g>
+    <g id="flamesBack"></g>
+    <g id="city" fill="#0c0405"></g>
+    <g id="windows"></g>
+    <g id="flamesFront"></g>
 
-    <!-- Casonas con balcones limeños -->
-    <g fill="#0b0909">
-      <rect x="560" y="560" width="370" height="200"/>
-      <rect x="1346" y="540" width="270" height="220"/>
-    </g>
-    <g fill="#160e09">
-      <rect x="590" y="600" width="140" height="56"/>
-      <rect x="760" y="600" width="140" height="56"/>
-      <rect x="1376" y="590" width="200" height="60"/>
-    </g>
-    <g fill="#5a3410" opacity=".55">
-      <rect x="600" y="610" width="20" height="36"/><rect x="630" y="610" width="20" height="36"/><rect x="660" y="610" width="20" height="36"/><rect x="690" y="610" width="20" height="36"/>
-      <rect x="770" y="610" width="20" height="36"/><rect x="800" y="610" width="20" height="36"/><rect x="830" y="610" width="20" height="36"/><rect x="860" y="610" width="20" height="36"/>
-      <rect x="1388" y="600" width="22" height="40"/><rect x="1420" y="600" width="22" height="40"/><rect x="1452" y="600" width="22" height="40"/><rect x="1484" y="600" width="22" height="40"/><rect x="1516" y="600" width="22" height="40"/>
-    </g>
+    <!-- calle -->
+    <path d="M0 720 L1600 700 L1600 900 L0 900 Z" fill="url(#street)"/>
+    <ellipse cx="990" cy="735" rx="520" ry="26" fill="#ff8a2a" opacity=".22" filter="url(#blur6)"/>
 
-    <!-- calle mojada -->
-    <rect x="0" y="755" width="1600" height="145" fill="url(#wet)"/>
-    <ellipse cx="1180" cy="790" rx="320" ry="16" fill="#e09a35" opacity=".18"/>
+    <g id="horde"></g>
+    <g id="eyes" filter="url(#glow)"></g>
 
-    <!-- farol -->
-    <circle cx="1470" cy="470" r="120" fill="url(#lamp)"/>
-    <g fill="#060506">
-      <rect x="1466" y="480" width="8" height="280"/>
-      <path d="M1450 452 L1490 452 L1484 488 L1456 488 Z"/>
-      <rect x="1460" y="444" width="20" height="8"/>
-    </g>
-    <rect x="1457" y="456" width="26" height="28" fill="#ffd27a" opacity=".85"/>
-
-    <!-- niebla baja -->
-    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8a050" stop-opacity="0"/><stop offset=".6" stop-color="#c8a050" stop-opacity=".09"/><stop offset="1" stop-color="#c8a050" stop-opacity="0"/></linearGradient><rect x="0" y="600" width="1600" height="220" fill="url(#fog)"/>
-
-    <!-- infectados acercándose desde la Catedral -->
-    <g fill="#040304">
-      <g transform="translate(1060 600) scale(1.05)">
-        <ellipse cx="0" cy="0" rx="15" ry="17"/>
-        <path d="M-14 12 Q0 4 16 14 L20 70 L-16 72 Z"/>
-        <path d="M14 22 L58 30 L58 38 L14 36 Z"/><path d="M-10 24 L36 44 L34 52 L-12 38 Z"/>
-        <path d="M-14 70 L-24 150 L-12 150 L0 80 L8 80 L14 150 L26 150 L18 70 Z"/>
+    <!-- Lag: de espaldas, solo, con la caja del pedido -->
+    <g id="lag" transform="translate(960 500)">
+      <g fill="#020101" stroke="#ff9a3a" stroke-width="2.2" stroke-opacity=".8" stroke-linejoin="round">
+        <!-- cola gruesa que se afina hacia la izquierda -->
+        <path d="M-40 214 Q-120 250 -210 300 Q-268 330 -320 326 Q-270 318 -214 286 Q-140 240 -60 196 Z"/>
+        <!-- piernas -->
+        <path d="M-46 214 L-66 380 L-26 380 L-12 236 Z"/>
+        <path d="M46 214 L66 380 L26 380 L12 236 Z"/>
+        <!-- torso con chaqueta -->
+        <path d="M-62 74 Q-78 160 -64 232 L64 232 Q78 160 62 74 Q40 54 0 52 Q-40 54 -62 74 Z"/>
+        <!-- brazo izquierdo con cuchillo de cocina -->
+        <path d="M-62 86 Q-98 150 -92 210 L-72 208 Q-72 160 -46 114 Z"/>
+        <path d="M-86 206 L-104 268 L-94 270 L-78 210 Z"/>
+        <!-- brazo derecho sujetando el pedido -->
+        <path d="M62 86 Q94 120 102 152 L86 160 Q70 130 46 114 Z"/>
+        <rect x="88" y="128" width="90" height="80" rx="4"/>
+        <!-- cuello y cabeza de lagarto mirando a la ciudad (hocico hacia arriba a la derecha) -->
+        <path d="M-26 62 Q-24 30 -6 14 L22 14 Q30 34 28 62 Z"/>
+        <path d="M-34 6 Q-40 -40 -6 -58 Q30 -72 66 -54 Q96 -40 104 -26 Q90 -16 60 -14 Q40 -10 30 4 Q8 22 -34 6 Z"/>
       </g>
-      <g transform="translate(860 640) scale(.8)">
-        <ellipse cx="0" cy="0" rx="15" ry="17"/>
-        <path d="M-14 12 Q0 4 16 14 L20 70 L-16 72 Z"/>
-        <path d="M14 22 L58 34 L56 42 L14 36 Z"/>
-        <path d="M-14 70 L-20 150 L-8 150 L2 80 L10 80 L18 150 L30 150 L18 70 Z"/>
-      </g>
-      <g transform="translate(1210 615) scale(.9)">
-        <ellipse cx="0" cy="0" rx="15" ry="17"/>
-        <path d="M-16 12 Q0 4 14 14 L18 70 L-18 72 Z"/>
-        <path d="M-14 22 L-58 32 L-58 40 L-14 36 Z"/>
-        <path d="M-16 70 L-26 150 L-14 150 L-2 80 L6 80 L12 150 L24 150 L16 70 Z"/>
-      </g>
+      <!-- audífonos rojos, como en el juego -->
+      <path d="M-30 -14 Q-8 -78 46 -56" fill="none" stroke="#e01c14" stroke-width="9" stroke-linecap="round"/>
+      <ellipse cx="-30" cy="-6" rx="12" ry="16" fill="#e01c14"/>
+      <!-- franja roja de la caja del pedido -->
+      <rect x="92" y="152" width="82" height="10" fill="#d81a14"/>
+      <circle cx="52" cy="-40" r="3" fill="#ff9a3a"/>
     </g>
-    <g fill="#ff2a1a">
-      <circle cx="1055" cy="597" r="2.6"/><circle cx="1066" cy="597" r="2.6"/>
-      <circle cx="857" cy="638" r="2.1"/><circle cx="865" cy="638" r="2.1"/>
-      <circle cx="1205" cy="612" r="2.3"/><circle cx="1215" cy="612" r="2.3"/>
-    </g>
-
-    <!-- Lag a contraluz del farol: lagarto delivery con su caja -->
-    <g transform="translate(1400 540) scale(1.55)" fill="#020202">
-      <ellipse cx="0" cy="0" rx="17" ry="20"/>
-      <path d="M-6 -16 Q2 -34 12 -14 Z"/>
-      <path d="M-16 16 Q0 24 16 16 L22 84 L-20 84 Z"/>
-      <rect x="-18" y="82" width="14" height="52"/>
-      <rect x="6" y="82" width="14" height="52"/>
-      <path d="M-14 76 Q-56 104 -84 126 Q-90 132 -82 132 Q-46 116 -6 92 Z"/>
-      <rect x="18" y="30" width="38" height="34"/>
-    </g>
-    <rect x="1429" y="603" width="54" height="5" fill="#c81818"/>
+    <g id="embers" filter="url(#glow)"></g>
   </svg>
-
   <div class="rain"></div>
-  <div class="grain"></div>
-
-  <div class="seal"><span><b>CUARENTENA</b>Centro de Lima<br>Incidente LPX</span></div>
 
   <div class="title">
     <span class="stamp">TEAMLAG</span>
     <div class="name">Lima<br>Infecta</div>
     <div class="sub">Incidente Lupitox</div>
   </div>
-
-  <div class="tape tape-2">
-    <span>NO PASAR</span><i></i><span>ZONA INFECTADA</span><i></i><span>LUPITOX</span><i></i><span>NO PASAR</span><i></i><span>ZONA INFECTADA</span><i></i><span>LUPITOX</span><i></i><span>NO PASAR</span><i></i><span>ZONA INFECTADA</span>
-  </div>
-  <div class="tape tape-1">
-    <span>ZONA INFECTADA</span><i></i><span>NO PASAR</span><i></i><span>LUPITOX</span><i></i><span>ZONA INFECTADA</span><i></i><span>NO PASAR</span><i></i><span>LUPITOX</span><i></i><span>ZONA INFECTADA</span><i></i><span>NO PASAR</span>
-  </div>
+  <div class="tag">Una noche. Un pedido.<br><b>Una ciudad que muerde.</b></div>
 </div>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent.appendChild(e); return e; };
+  const $ = id => document.getElementById(id);
+
+  // Skyline del Centro de Lima: casonas, balcones y la Catedral
+  const city = $('city'), win = $('windows');
+  const blocks = [];
+  let x = -20;
+  while (x < 1620) {
+    const w = 70 + rnd() * 110, h = 120 + rnd() * 150;
+    blocks.push({ x, w, h });
+    x += w - 4;
+  }
+  blocks.forEach(b => {
+    const top = 720 - b.h;
+    el('rect', { x: b.x, y: top, width: b.w, height: b.h + 10 }, city);
+    if (rnd() < .5) el('rect', { x: b.x + 6, y: top + b.h * .35, width: b.w - 12, height: 26, fill: '#120506' }, city);
+    for (let wy = top + 18; wy < 700; wy += 34) for (let wx = b.x + 12; wx < b.x + b.w - 14; wx += 24) {
+      if (rnd() < .45) el('rect', { x: wx, y: wy, width: 11, height: 18, fill: rnd() < .6 ? '#ff8a24' : '#ffd07a', opacity: .45 + rnd() * .5 }, win);
+    }
+  });
+  // Catedral ardiendo, al centro-izquierda del fuego
+  const cx = 1270;
+  [[cx - 150, 340], [cx + 70, 340]].forEach(([tx, ty]) => {
+    el('rect', { x: tx, y: ty, width: 80, height: 720 - ty }, city);
+    el('rect', { x: tx + 10, y: ty - 54, width: 60, height: 58 }, city);
+    el('path', { d: `M${tx + 10} ${ty - 54} Q${tx + 40} ${ty - 104} ${tx + 70} ${ty - 54} Z` }, city);
+    el('rect', { x: tx + 37, y: ty - 132, width: 6, height: 36 }, city);
+    el('rect', { x: tx + 29, y: ty - 122, width: 22, height: 5 }, city);
+    el('rect', { x: tx + 28, y: ty - 40, width: 9, height: 22, rx: 4, fill: '#ffb040' }, win);
+    el('rect', { x: tx + 43, y: ty - 40, width: 9, height: 22, rx: 4, fill: '#ffb040' }, win);
+  });
+  el('path', { d: `M${cx - 70} 470 L${cx + 10} 410 L${cx + 70} 470 Z` }, city);
+  el('rect', { x: cx - 70, y: 470, width: 140, height: 250 }, city);
+
+  // Llamas sobre los techos
+  const fb = $('flamesBack'), ff = $('flamesFront');
+  const flame = (fx, fy, fw, fh, parent, op) => {
+    const j = () => (rnd() - .5) * fw * .25;
+    const L = fx - fw / 2, R = fx + fw / 2;
+    const t1 = [fx - fw * .28 + j(), fy - fh * (.45 + rnd() * .2)];
+    const d1 = [fx - fw * .12, fy - fh * .3];
+    const t2 = [fx + j(), fy - fh];
+    const d2 = [fx + fw * .14, fy - fh * .36];
+    const t3 = [fx + fw * .3 + j(), fy - fh * (.5 + rnd() * .2)];
+    const d = `M${L} ${fy} Q${L + fw * .02} ${fy - fh * .3} ${t1[0]} ${t1[1]} Q${d1[0] - 4} ${d1[1] + fh * .1} ${d1[0]} ${d1[1]} ` +
+      `Q${t2[0] - fw * .12} ${fy - fh * .55} ${t2[0]} ${t2[1]} Q${t2[0] + fw * .1} ${fy - fh * .62} ${d2[0]} ${d2[1]} ` +
+      `Q${d2[0] + 6} ${d2[1] + fh * .08} ${t3[0]} ${t3[1]} Q${R - fw * .02} ${fy - fh * .28} ${R} ${fy} Z`;
+    el('path', { d, fill: 'url(#flame)', opacity: op }, parent);
+  };
+  blocks.forEach(b => {
+    if (rnd() < .78) {
+      const n = 2 + Math.floor(rnd() * 3);
+      for (let i = 0; i < n; i++) flame(b.x + rnd() * b.w, 724 - b.h, 40 + rnd() * 70, 80 + rnd() * 190, rnd() < .5 ? fb : ff, .55 + rnd() * .45);
+    }
+  });
+  flame(cx - 110, 300, 90, 200, ff, .9); flame(cx + 110, 290, 110, 240, ff, .95); flame(cx, 420, 160, 260, fb, .8);
+
+  // Humo
+  const smoke = $('smoke');
+  for (let i = 0; i < 26; i++) el('ellipse', { cx: rnd() * 1600, cy: 120 + rnd() * 320, rx: 120 + rnd() * 200, ry: 50 + rnd() * 90, fill: '#0a0405', opacity: .5 + rnd() * .4 }, smoke);
+
+  // Horda: siluetas cojeando desde ambos lados, más grandes cuanto más cerca
+  const horde = $('horde'), eyes = $('eyes');
+  const zombie = (zx, zy, s, flip) => {
+    const g = el('g', { transform: `translate(${zx} ${zy}) scale(${flip ? -s : s} ${s})`, fill: '#030101' }, horde);
+    el('ellipse', { cx: 0, cy: 0, rx: 14, ry: 16 }, g);
+    el('path', { d: 'M-14 12 Q2 2 16 14 L20 72 L-16 74 Z' }, g);
+    el('path', { d: 'M14 22 L62 28 L62 37 L14 36 Z' }, g);
+    el('path', { d: 'M-8 24 L44 42 L42 51 L-10 38 Z' }, g);
+    el('path', { d: 'M-14 72 L-26 150 L-13 150 L0 84 L8 84 L16 150 L29 150 L18 72 Z' }, g);
+    const ex = flip ? -1 : 1;
+    el('circle', { cx: zx + ex * 3 * s, cy: zy - 2 * s, r: 2.2 * s, fill: '#ff2a12' }, eyes);
+    el('circle', { cx: zx + ex * 11 * s, cy: zy - 2 * s, r: 2.2 * s, fill: '#ff2a12' }, eyes);
+  };
+  const spots = [];
+  for (let i = 0; i < 26; i++) {
+    const left = i % 2 === 0;
+    const depth = rnd();
+    const zx = left ? 60 + rnd() * 700 : 1200 + rnd() * 380;
+    const zy = 640 + depth * 140;
+    spots.push([zx, zy, .55 + depth * 1.25, !left]);
+  }
+  spots.sort((a, b) => a[1] - b[1]).forEach(s => zombie(...s));
+
+  // Brasas en el aire
+  const em = $('embers');
+  for (let i = 0; i < 140; i++) el('circle', { cx: rnd() * 1600, cy: rnd() * 760, r: .8 + rnd() * 2.6, fill: rnd() < .5 ? '#ffb040' : '#ff6a1a', opacity: .4 + rnd() * .6 }, em);
+</script>
 </body>
 </html>
