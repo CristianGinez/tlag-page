@@ -27,10 +27,7 @@ const links = [
             <div class="hidden md:flex w-full items-center justify-between">
                 
                 <div class="flex-1 flex justify-end items-center space-x-8 pr-8">
-                    <a href={links[0].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors relative group">
-                        {links[0].name}
-                        <span class="absolute -top-3 -right-4 bg-purple-600 text-[9px] px-1.5 py-0.5 rounded-full text-white opacity-80 group-hover:opacity-100 transition-opacity">NEW</span>
-                    </a>
+                    <a href={links[0].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors">{links[0].name}</a>
                     <a href={links[1].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors">{links[1].name}</a>
                 </div>
 
@@ -44,7 +41,10 @@ const links = [
                     <a href={links[2].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors">{links[2].name}</a>
                     
                     <a href={links[3].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors">{links[3].name}</a>
-                    <a href={links[4].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors">{links[4].name}</a>
+                    <a href={links[4].href} class="nav-link font-bold tracking-wider hover:text-yellow-400 transition-colors relative group">
+                        {links[4].name}
+                        <span class="absolute -top-3 -right-4 bg-red-600 text-[9px] px-1.5 py-0.5 rounded-full text-white opacity-80 group-hover:opacity-100 transition-opacity">NEW</span>
+                    </a>
                     
                     <div class="ml-4 pl-4 border-l border-white/20 h-8 flex items-center">
                         <a 
