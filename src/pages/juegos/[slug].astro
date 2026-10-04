@@ -8,6 +8,7 @@ import { LeaderboardPanel } from '@/features/games/components/LeaderboardPanel';
 import { getGame } from '@/features/games/lib/gamesData';
 import { optimizeUrl } from '@/shared/lib/imageOptimizer';
 import { ogJuego } from '@/shared/lib/og';
+import { SITE_ORIGIN } from '@/features/games/lib/origins';
 import type { PlayerGame } from '@/features/games/types';
 
 export const prerender = false;
@@ -28,10 +29,12 @@ const playerGame: PlayerGame = {
   save_prefix: game.save_prefix,
   save_exclude: game.save_exclude,
 };
+// Imagen al compartir: la portada del juego (absoluta); si no hay, la generada.
+const shareImage = game.cover_url ? new URL(game.cover_url, SITE_ORIGIN).href : ogJuego(game.slug);
 const cover = optimizeUrl(game.cover_url ?? '', { width: 1600 });
 ---
 
-<Layout title={`${game.title} - Juegos TeamLag`} description={game.tagline ?? game.title} image={ogJuego(game.slug)}>
+<Layout title={`${game.title} - Juegos TeamLag`} description={game.tagline ?? game.title} image={shareImage}>
   <Navbar />
   <main class="min-h-screen bg-[#050505] text-white">
     <section class="relative h-[70vh] min-h-[420px] flex items-end">
