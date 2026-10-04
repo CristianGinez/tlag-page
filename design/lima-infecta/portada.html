@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #000; }
+  .poster {
+    position: relative; width: 1600px; height: 900px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 60% 55% at 74% 70%, rgba(214, 140, 40, .55), rgba(120, 50, 10, .25) 45%, transparent 75%),
+      radial-gradient(ellipse 40% 30% at 20% 0%, rgba(80, 90, 120, .25), transparent 70%),
+      linear-gradient(#0a0b10 0%, #12101a 45%, #1d120c 78%, #0a0706 100%);
+    font-family: Georgia, serif;
+  }
+  .rain {
+    position: absolute; inset: 0; pointer-events: none; opacity: .5;
+    background-image:
+      repeating-linear-gradient(104deg, transparent 0 38px, rgba(210, 220, 240, .28) 38px 39px, transparent 39px 97px),
+      repeating-linear-gradient(101deg, transparent 0 63px, rgba(210, 220, 240, .16) 63px 64px, transparent 64px 151px);
+  }
+  .grain {
+    position: absolute; inset: 0; opacity: .18; mix-blend-mode: overlay;
+    background-image: radial-gradient(rgba(255,255,255,.5) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+  svg.city { position: absolute; left: 0; bottom: 0; width: 1600px; height: 900px; }
+  .title {
+    position: absolute; left: 92px; top: 118px; color: #e2d2b0;
+  }
+  .stamp {
+    display: inline-block; font-family: Anton, Impact, sans-serif; font-size: 64px; letter-spacing: 3px;
+    color: #c81818; transform: rotate(-3deg); text-shadow: 0 0 28px rgba(255, 40, 20, .45);
+    margin-left: 6px;
+  }
+  .name {
+    font-family: Anton, Impact, sans-serif; font-size: 248px; line-height: .84; text-transform: uppercase;
+    letter-spacing: -2px; margin-top: 10px;
+    text-shadow: 0 10px 50px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.6);
+  }
+  .sub {
+    font-family: 'Special Elite', monospace; font-size: 30px; color: #c8a050; margin-top: 26px; margin-left: 8px;
+  }
+  .tape {
+    position: absolute; left: -80px; width: 1800px; height: 66px;
+    background: #e3bd17;
+    box-shadow: 0 8px 22px rgba(0,0,0,.6);
+    display: flex; align-items: center; gap: 46px; white-space: nowrap; overflow: hidden;
+    font-family: Anton, Impact, sans-serif; font-size: 38px; letter-spacing: 3px; color: #111;
+    background-image: repeating-linear-gradient(135deg, rgba(0,0,0,.06) 0 14px, transparent 14px 28px);
+  }
+  .tape span { flex: none; }
+  .tape i { flex: none; width: 34px; height: 34px; background: #111; transform: rotate(45deg); }
+  .tape-1 { top: 742px; transform: rotate(-5deg); }
+  .tape-2 { top: 812px; transform: rotate(3deg); opacity: .92; filter: brightness(.82); }
+  .seal {
+    position: absolute; right: 86px; top: 70px; width: 210px; height: 210px; border-radius: 50%;
+    border: 6px double rgba(200, 24, 24, .85); color: rgba(220, 40, 30, .9);
+    display: grid; place-items: center; text-align: center; transform: rotate(12deg);
+    font-family: 'Special Elite', monospace; font-size: 22px; line-height: 1.25;
+    box-shadow: inset 0 0 0 10px transparent;
+  }
+  .seal b { display: block; font-family: Anton, Impact, sans-serif; font-weight: 400; font-size: 40px; letter-spacing: 2px; }
+</style>
+</head>
+<body>
+<div class="poster" id="poster">
+  <svg class="city" viewBox="0 0 1600 900" aria-hidden="true">
+    <defs>
+      <radialGradient id="lamp" cx="50%" cy="50%" r="50%">
+        <stop offset="0" stop-color="#ffd27a" stop-opacity=".95"/>
+        <stop offset=".35" stop-color="#e09a35" stop-opacity=".45"/>
+        <stop offset="1" stop-color="#e09a35" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="wet" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a1a0e"/>
+        <stop offset="1" stop-color="#070505"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Catedral de Lima: dos torres con campanarios y cúpulas -->
+    <g fill="#08070a">
+      <rect x="930" y="430" width="96" height="330"/>
+      <rect x="944" y="372" width="68" height="70"/>
+      <path d="M944 372 Q978 318 1012 372 Z"/>
+      <rect x="974" y="300" width="8" height="40"/>
+      <rect x="966" y="312" width="24" height="6"/>
+      <rect x="1250" y="430" width="96" height="330"/>
+      <rect x="1264" y="372" width="68" height="70"/>
+      <path d="M1264 372 Q1298 318 1332 372 Z"/>
+      <rect x="1294" y="300" width="8" height="40"/>
+      <rect x="1286" y="312" width="24" height="6"/>
+      <rect x="1026" y="500" width="224" height="260"/>
+      <path d="M1026 500 L1138 440 L1250 500 Z"/>
+      <path d="M1098 760 L1098 640 Q1138 590 1178 640 L1178 760 Z" fill="#1c1208"/>
+    </g>
+    <!-- ventanas de campanario con luz tenue -->
+    <g fill="#c8862a" opacity=".55">
+      <rect x="966" y="392" width="10" height="26" rx="5"/><rect x="980" y="392" width="10" height="26" rx="5"/>
+      <rect x="1286" y="392" width="10" height="26" rx="5"/><rect x="1300" y="392" width="10" height="26" rx="5"/>
+    </g>
+
+    <!-- Casonas con balcones limeños -->
+    <g fill="#0b0909">
+      <rect x="560" y="560" width="370" height="200"/>
+      <rect x="1346" y="540" width="270" height="220"/>
+    </g>
+    <g fill="#160e09">
+      <rect x="590" y="600" width="140" height="56"/>
+      <rect x="760" y="600" width="140" height="56"/>
+      <rect x="1376" y="590" width="200" height="60"/>
+    </g>
+    <g fill="#5a3410" opacity=".55">
+      <rect x="600" y="610" width="20" height="36"/><rect x="630" y="610" width="20" height="36"/><rect x="660" y="610" width="20" height="36"/><rect x="690" y="610" width="20" height="36"/>
+      <rect x="770" y="610" width="20" height="36"/><rect x="800" y="610" width="20" height="36"/><rect x="830" y="610" width="20" height="36"/><rect x="860" y="610" width="20" height="36"/>
+      <rect x="1388" y="600" width="22" height="40"/><rect x="1420" y="600" width="22" height="40"/><rect x="1452" y="600" width="22" height="40"/><rect x="1484" y="600" width="22" height="40"/><rect x="1516" y="600" width="22" height="40"/>
+    </g>
+
+    <!-- calle mojada -->
+    <rect x="0" y="755" width="1600" height="145" fill="url(#wet)"/>
+    <ellipse cx="1180" cy="790" rx="320" ry="16" fill="#e09a35" opacity=".18"/>
+
+    <!-- farol -->
+    <circle cx="1470" cy="470" r="120" fill="url(#lamp)"/>
+    <g fill="#060506">
+      <rect x="1466" y="480" width="8" height="280"/>
+      <path d="M1450 452 L1490 452 L1484 488 L1456 488 Z"/>
+      <rect x="1460" y="444" width="20" height="8"/>
+    </g>
+    <rect x="1457" y="456" width="26" height="28" fill="#ffd27a" opacity=".85"/>
+
+    <!-- niebla baja -->
+    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8a050" stop-opacity="0"/><stop offset=".6" stop-color="#c8a050" stop-opacity=".09"/><stop offset="1" stop-color="#c8a050" stop-opacity="0"/></linearGradient><rect x="0" y="600" width="1600" height="220" fill="url(#fog)"/>
+
+    <!-- infectados acercándose desde la Catedral -->
+    <g fill="#040304">
+      <g transform="translate(1060 600) scale(1.05)">
+        <ellipse cx="0" cy="0" rx="15" ry="17"/>
+        <path d="M-14 12 Q0 4 16 14 L20 70 L-16 72 Z"/>
+        <path d="M14 22 L58 30 L58 38 L14 36 Z"/><path d="M-10 24 L36 44 L34 52 L-12 38 Z"/>
+        <path d="M-14 70 L-24 150 L-12 150 L0 80 L8 80 L14 150 L26 150 L18 70 Z"/>
+      </g>
+      <g transform="translate(860 640) scale(.8)">
+        <ellipse cx="0" cy="0" rx="15" ry="17"/>
+        <path d="M-14 12 Q0 4 16 14 L20 70 L-16 72 Z"/>
+        <path d="M14 22 L58 34 L56 42 L14 36 Z"/>
+        <path d="M-14 70 L-20 150 L-8 150 L2 80 L10 80 L18 150 L30 150 L18 70 Z"/>
+      </g>
+      <g transform="translate(1210 615) scale(.9)">
+        <ellipse cx="0" cy="0" rx="15" ry="17"/>
+        <path d="M-16 12 Q0 4 14 14 L18 70 L-18 72 Z"/>
+        <path d="M-14 22 L-58 32 L-58 40 L-14 36 Z"/>
+        <path d="M-16 70 L-26 150 L-14 150 L-2 80 L6 80 L12 150 L24 150 L16 70 Z"/>
+      </g>
+    </g>
+    <g fill="#ff2a1a">
+      <circle cx="1055" cy="597" r="2.6"/><circle cx="1066" cy="597" r="2.6"/>
+      <circle cx="857" cy="638" r="2.1"/><circle cx="865" cy="638" r="2.1"/>
+      <circle cx="1205" cy="612" r="2.3"/><circle cx="1215" cy="612" r="2.3"/>
+    </g>
+
+    <!-- Lag a contraluz del farol: lagarto delivery con su caja -->
+    <g transform="translate(1400 540) scale(1.55)" fill="#020202">
+      <ellipse cx="0" cy="0" rx="17" ry="20"/>
+      <path d="M-6 -16 Q2 -34 12 -14 Z"/>
+      <path d="M-16 16 Q0 24 16 16 L22 84 L-20 84 Z"/>
+      <rect x="-18" y="82" width="14" height="52"/>
+      <rect x="6" y="82" width="14" height="52"/>
+      <path d="M-14 76 Q-56 104 -84 126 Q-90 132 -82 132 Q-46 116 -6 92 Z"/>
+      <rect x="18" y="30" width="38" height="34"/>
+    </g>
+    <rect x="1429" y="603" width="54" height="5" fill="#c81818"/>
+  </svg>
+
+  <div class="rain"></div>
+  <div class="grain"></div>
+
+  <div class="seal"><span><b>CUARENTENA</b>Centro de Lima<br>Incidente LPX</span></div>
+
+  <div class="title">
+    <span class="stamp">TEAMLAG</span>
+    <div class="name">Lima<br>Infecta</div>
+    <div class="sub">Incidente Lupitox</div>
+  </div>
+
+  <div class="tape tape-2">
+    <span>NO PASAR</span><i></i><span>ZONA INFECTADA</span><i></i><span>LUPITOX</span><i></i><span>NO PASAR</span><i></i><span>ZONA INFECTADA</span><i></i><span>LUPITOX</span><i></i><span>NO PASAR</span><i></i><span>ZONA INFECTADA</span>
+  </div>
+  <div class="tape tape-1">
+    <span>ZONA INFECTADA</span><i></i><span>NO PASAR</span><i></i><span>LUPITOX</span><i></i><span>ZONA INFECTADA</span><i></i><span>NO PASAR</span><i></i><span>LUPITOX</span><i></i><span>ZONA INFECTADA</span><i></i><span>NO PASAR</span>
+  </div>
+</div>
+</body>
+</html>
