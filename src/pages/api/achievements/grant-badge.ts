@@ -2,6 +2,10 @@ import type { APIRoute } from 'astro';
 import { getSupabase, createServiceClient } from '@/features/auth/lib/supabase';
 import { getBadges } from '@/features/achievements/lib/achievementsData';
 
+// Badges que un usuario puede otorgarse a sí mismo (acciones verificadas en el cliente).
+// El resto se otorga desde /api/admin/grant-badge o desde endpoints de dominio.
+const SELF_GRANTABLE = new Set(['discord-conectado']);
+
 export const POST: APIRoute = async (context) => {
   try {
     // 1. Verificar sesión — acepta Bearer token (PKCE) o cookies (SSR)
@@ -27,6 +31,10 @@ export const POST: APIRoute = async (context) => {
     const { badge_slug, event_id = null } = body;
     if (!badge_slug) {
       return new Response(JSON.stringify({ error: 'badge_slug requerido' }), { status: 400 });
+    }
+
+    if (!SELF_GRANTABLE.has(badge_slug)) {
+      return new Response(JSON.stringify({ error: 'Badge no autoasignable' }), { status: 403 });
     }
 
     // 2. Otorgar badge con service_role (idempotente)

@@ -72,3 +72,14 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-track { background: var(--color-surface); }
 ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-secondary); }
+
+/* Modo juego: sin scroll ni anuncios mientras el reproductor está abierto */
+html.tl-playing,
+html.tl-playing body {
+  overflow: hidden;
+}
+html.tl-playing ins.adsbygoogle,
+html.tl-playing .adsbygoogle,
+html.tl-playing .google-auto-placed {
+  display: none !important;
+}

@@ -1,7 +1,7 @@
 ---
 title: "Política de Privacidad"
 docSlug: "privacidad"
-lastUpdated: 2025-12-01
+lastUpdated: 2026-10-03
 version: "1.0"
 ---
 
@@ -12,6 +12,8 @@ Para garantizar la integridad de las votaciones en los LAG AWARDS, utilizamos el
 - ID único de Google (para identificar tu voto)
 - Correo electrónico (para evitar multicuentas)
 - Nombre y Foto de perfil (para mostrar en la barra de navegación)
+
+Si juegas a los **juegos de TeamLag** con la sesión iniciada, guardamos tu partida (el progreso que el juego guarda en tu navegador) asociada a tu cuenta, para que puedas continuar en cualquier dispositivo. Puedes borrarla desde la página de cada juego, y se elimina junto con tu cuenta.
 
 ## 2. Uso de la información
 

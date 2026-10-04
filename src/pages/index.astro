@@ -9,19 +9,44 @@ import ConnectDiscordCTA from '@/features/auth/components/ConnectDiscordCTA.astr
 import AwardsHighlight from '@/features/awards/components/AwardsHighlight.astro';
 import LeagueHighlight from '@/features/parsec-league/components/LeagueHighlight.astro';
 import TeamSection from '@/features/community/components/TeamSection.astro';
+import LimaInfectaHero from '@/features/home/heroes/LimaInfectaHero.astro';
+import GameShowcase from '@/features/home/components/GameShowcase.astro';
+import SurvivorsBoard from '@/features/home/components/SurvivorsBoard.astro';
+import BotCard from '@/features/home/components/BotCard.astro';
+import { getGame, getLeaderboard } from '@/features/games/lib/gamesData';
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+// Evento actual del home: lanzamiento de Lima Infecta.
+// Para volver al home de comunidad (o pasar a otro evento), cambia FEATURED_SLUG o el hero de abajo.
+const FEATURED_SLUG = 'lima-infecta';
+const game = await getGame(FEATURED_SLUG);
+const boards = game
+  ? await Promise.all((game.boards ?? []).map(async (board) => ({ board, rows: await getLeaderboard(game.slug, board.id) })))
+  : [];
+const normal = boards.find((b) => b.board.id === 'normal') ?? boards[0];
+const record = normal?.rows[0] ?? null;
+
 ---
 
 <Layout
-  title="TeamLag — La comunidad oficial de LAGartovich"
-  description="Comunidad argentina de videojuegos y stream. LAG Awards, Parsec League, streams en vivo y más."
-  image="https://res.cloudinary.com/dkjaq3i9p/image/upload/v1768785502/PORTADA_vzoqne.jpg"
+  title={game ? `${game.title} — TeamLag` : 'TeamLag — La comunidad oficial de LAGartovich'}
+  description={game ? 'Survival horror de cámaras fijas en el Centro de Lima. Juega gratis en el navegador.' : 'Comunidad argentina de videojuegos y stream. LAG Awards, Parsec League, streams en vivo y más.'}
+  image={game ? 'https://www.tlag.online/img/juegos/lima-infecta/cover.jpg' : 'https://res.cloudinary.com/dkjaq3i9p/image/upload/v1768785502/PORTADA_vzoqne.jpg'}
 >
   <Navbar />
   <main class="bg-[#050505] min-h-screen">
-    <HeroSection />
+    {game ? (
+      <>
+        <LimaInfectaHero game={game} record={record} recordBoard={normal?.board.label ?? ''} />
+        <GameShowcase />
+        {boards.length > 0 && <SurvivorsBoard slug={game.slug} boards={boards} />}
+      </>
+    ) : (
+      <HeroSection />
+    )}
     <NewsFeedSection />
+    {game && <BotCard />}
     <ConnectDiscordCTA />
 
     <!-- Divisor -->

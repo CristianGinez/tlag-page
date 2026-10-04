@@ -1,0 +1,71 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Navbar from '@/layouts/Navbar.astro';
+import Footer from '@/layouts/Footer.astro';
+import { GamePlayer } from '@/features/games/components/GamePlayer';
+import { GameSaveStatus } from '@/features/games/components/GameSaveStatus';
+import { LeaderboardPanel } from '@/features/games/components/LeaderboardPanel';
+import { getGame } from '@/features/games/lib/gamesData';
+import { optimizeUrl } from '@/shared/lib/imageOptimizer';
+import { ogJuego } from '@/shared/lib/og';
+import type { PlayerGame } from '@/features/games/types';
+
+export const prerender = false;
+
+const { slug } = Astro.params;
+const game = slug ? await getGame(slug) : null;
+if (!game) return Astro.redirect('/404');
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const playerGame: PlayerGame = {
+  slug: game.slug,
+  title: game.title,
+  cover_url: game.cover_url,
+  play_url: game.play_url,
+  version: game.version,
+  orientation: game.orientation,
+  save_prefix: game.save_prefix,
+  save_exclude: game.save_exclude,
+};
+const cover = optimizeUrl(game.cover_url ?? '', { width: 1600 });
+---
+
+<Layout title={`${game.title} - Juegos TeamLag`} description={game.tagline ?? game.title} image={ogJuego(game.slug)}>
+  <Navbar />
+  <main class="min-h-screen bg-[#050505] text-white">
+    <section class="relative h-[70vh] min-h-[420px] flex items-end">
+      <img src={cover} alt="" class="absolute inset-0 w-full h-full object-cover opacity-50" />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent"></div>
+      <div class="relative container mx-auto px-6 pb-12">
+        <div class="flex flex-wrap gap-2 mb-4">
+          {game.tags.map((tag) => (
+            <span class="text-[11px] uppercase tracking-widest px-2 py-0.5 rounded border border-white/20 text-gray-300">{tag}</span>
+          ))}
+        </div>
+        <h1 class="text-4xl md:text-6xl font-black font-orbitron mb-2">{game.title}</h1>
+        {game.tagline && <p class="text-xl text-gray-300 mb-8">{game.tagline}</p>}
+        <GamePlayer client:load game={playerGame} />
+      </div>
+    </section>
+
+    <section class="container mx-auto px-6 py-12 grid gap-10 md:grid-cols-3">
+      <div class="md:col-span-2">
+        {game.description && <p class="text-gray-300 leading-relaxed whitespace-pre-line">{game.description}</p>}
+        {game.boards?.length > 0 && <LeaderboardPanel client:only="react" slug={game.slug} boards={game.boards} />}
+      </div>
+      <aside class="space-y-6">
+        {game.controls && (
+          <div>
+            <h2 class="font-orbitron text-sm tracking-widest text-gray-500 mb-2">CONTROLES</h2>
+            <p class="text-gray-300 whitespace-pre-line">{game.controls}</p>
+          </div>
+        )}
+        <div id="game-extra">
+          {game.save_prefix && <GameSaveStatus client:only="react" slug={game.slug} />}
+        </div>
+      </aside>
+    </section>
+  </main>
+  <Footer />
+</Layout>

@@ -1,0 +1,31 @@
+---
+import Layout from '@/layouts/Layout.astro';
+import Navbar from '@/layouts/Navbar.astro';
+import Footer from '@/layouts/Footer.astro';
+import GameCard from '@/features/games/components/GameCard.astro';
+import { getGames } from '@/features/games/lib/gamesData';
+
+export const prerender = false;
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const games = await getGames();
+---
+
+<Layout title="Juegos - TeamLag" description="Juegos hechos por y para la comunidad TeamLag.">
+  <Navbar />
+  <main class="pt-32 pb-20 min-h-screen bg-[#050505] text-white">
+    <div class="container mx-auto px-6">
+      <h1 class="text-5xl md:text-7xl font-bold font-orbitron mb-12 text-center tracking-wider">
+        JUEGOS <span class="text-red-600">TEAMLAG</span>
+      </h1>
+      {games.length === 0 ? (
+        <p class="text-center text-gray-500">Muy pronto.</p>
+      ) : (
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {games.map((game) => <GameCard game={game} />)}
+        </div>
+      )}
+    </div>
+  </main>
+  <Footer />
+</Layout>
