@@ -1,5 +1,6 @@
 import type { ScoreSubmission } from '../types';
 import { BOARD_RE, addPending, isSubmission } from './scores';
+import { ACHIEVEMENT_RE } from './achievements';
 
 export interface RequestDeps {
   slug: string;
@@ -69,6 +70,24 @@ export async function handleGameRequest(name: unknown, params: unknown, deps: Re
         if (res.ok) return ok({ status: 'published', pos: body.pos ?? null });
         if (res.status === 400 || res.status === 404) return ok({ status: 'rejected', reason: body.error ?? 'rejected' });
         deps.savePending(addPending(deps.loadPending(), item));
+        return fail(`http_${res.status}`);
+      }
+      case 'unlockAchievement': {
+        // Sin cola de pendientes: el juego vuelve a pedirlo la próxima vez que se cumpla la condición
+        const id = (params as { id?: unknown } | null)?.id;
+        if (typeof id !== 'string' || !ACHIEVEMENT_RE.test(id)) return fail('bad_params');
+        if (deps.preview) return ok({ status: 'rejected', reason: 'preview' });
+        const token = await deps.getToken();
+        if (!token) return ok({ status: 'pending_login' });
+        const res = await deps.fetch('/api/games/achievement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...auth(token) },
+          body: JSON.stringify({ game: deps.slug, id }),
+        });
+        const body = (await res.json().catch(() => ({}))) as { status?: string; error?: string; badge?: unknown };
+        if (res.ok) return ok({ status: body.status === 'granted' ? 'granted' : 'already', badge: body.badge ?? null });
+        if (res.status === 401) return ok({ status: 'pending_login' });
+        if (res.status === 404) return ok({ status: 'rejected', reason: body.error ?? 'rejected' });
         return fail(`http_${res.status}`);
       }
       default:

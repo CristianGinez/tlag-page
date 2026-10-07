@@ -105,3 +105,37 @@ describe('flushPending', () => {
     await expect(flushPending(t.d)).resolves.toBeUndefined();
   });
 });
+
+describe('unlockAchievement', () => {
+  it('otorgado: manda juego e id con el token', async () => {
+    const t = deps({}, [[200, { status: 'granted', badge: { slug: 'lima-archivo-completo' } }]]);
+    expect(await handleGameRequest('unlockAchievement', { id: 'archivo-completo' }, t.d))
+      .toEqual({ ok: true, data: { status: 'granted', badge: { slug: 'lima-archivo-completo' } } });
+    expect(t.calls[0][0]).toBe('/api/games/achievement');
+    expect(JSON.parse(String(t.calls[0][1]?.body))).toEqual({ game: 'lima-infecta', id: 'archivo-completo' });
+    expect((t.calls[0][1]?.headers as Record<string, string>).Authorization).toBe('Bearer tok');
+  });
+  it('ya lo tenía', async () => {
+    const t = deps({}, [[200, { status: 'already', badge: null }]]);
+    expect(await handleGameRequest('unlockAchievement', { id: 'archivo-completo' }, t.d)).toEqual({ ok: true, data: { status: 'already', badge: null } });
+  });
+  it('sin sesión → pending_login, sin llamar a la API', async () => {
+    const t = deps({ getToken: async () => null });
+    expect(await handleGameRequest('unlockAchievement', { id: 'archivo-completo' }, t.d)).toEqual({ ok: true, data: { status: 'pending_login' } });
+    expect(t.calls).toHaveLength(0);
+  });
+  it('id inválido o preview no llaman a la API', async () => {
+    const t = deps();
+    expect(await handleGameRequest('unlockAchievement', { id: '../x' }, t.d)).toEqual({ ok: false, error: 'bad_params' });
+    expect(await handleGameRequest('unlockAchievement', null, t.d)).toEqual({ ok: false, error: 'bad_params' });
+    const p = deps({ preview: true });
+    expect(await handleGameRequest('unlockAchievement', { id: 'archivo-completo' }, p.d)).toEqual({ ok: true, data: { status: 'rejected', reason: 'preview' } });
+    expect(t.calls).toHaveLength(0);
+    expect(p.calls).toHaveLength(0);
+  });
+  it('logro desconocido → rejected; error del servidor → fail', async () => {
+    const t = deps({}, [[404, { error: 'unknown_achievement' }], [500, {}]]);
+    expect(await handleGameRequest('unlockAchievement', { id: 'otro' }, t.d)).toEqual({ ok: true, data: { status: 'rejected', reason: 'unknown_achievement' } });
+    expect(await handleGameRequest('unlockAchievement', { id: 'otro' }, t.d)).toEqual({ ok: false, error: 'http_500' });
+  });
+});

@@ -25,3 +25,4 @@ Cada carpeta es un juego publicado. Se sirve desde `https://juegos.tlag.online/g
 5. Opcional: `TL.event('score', { board, score })`, `TL.event('completed')`, `TL.exit()`.
 6. Sin modos debug activables por URL en el build publicado.
 7. Datos online (marcadores): `await TL.request('leaderboard', { board })`, `await TL.request('myScores')`, `await TL.request('submitScore', { board, time_ms, rank, stats })`. Rechaza con `offline`/`timeout` si no hay conexión: el juego debe seguir funcionando.
+8. Logros para el perfil: `await TL.request('unlockAchievement', { id })` → `{ status: 'granted' | 'already' | 'pending_login' | 'rejected' }`. No hay cola: si no hay sesión, pídelo otra vez la próxima vez que se cumpla la condición. Cada id se registra en `src/features/games/lib/achievements.ts` y apunta a un badge de la tabla `badges` (crearlo con una migración).
