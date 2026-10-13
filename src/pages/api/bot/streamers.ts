@@ -41,6 +41,9 @@ export const POST: APIRoute = async (context) => {
       case 'addYoutube':
         result = await convex.action('streamers:addYoutube' as any, args);
         break;
+      case 'addKick':
+        result = await convex.action('streamers:addKick' as any, args);
+        break;
       case 'remove':
         result = await convex.action('streamers:remove' as any, args);
         break;

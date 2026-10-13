@@ -2,6 +2,8 @@ import { useState } from 'react';
 import type { TrackedStreamer, Platform } from '../types';
 import { supabase } from '@/features/auth/lib/supabase';
 
+const PLATFORM_COLOR: Record<Platform, string> = { twitch: '#9146FF', youtube: '#FF0000', kick: '#53FC18' };
+
 interface Props {
   initialStreamers: TrackedStreamer[];
 }
@@ -65,15 +67,16 @@ export default function StreamersManager({ initialStreamers }: Props) {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (platform === 'twitch' && !login) return setError('Falta el login de Twitch');
+    if (platform === 'kick' && !login) return setError('Falta el usuario de Kick');
     if (platform === 'youtube' && !youtubeLogin) return setError('Falta el handle de YouTube');
     if (platform === 'youtube' && !channelId) return setError('Falta el Channel ID (UC...) de YouTube');
 
-    const action = platform === 'twitch' ? 'addTwitch' : 'addYoutube';
+    const action = platform === 'twitch' ? 'addTwitch' : platform === 'kick' ? 'addKick' : 'addYoutube';
     const args: Record<string, string | undefined> = {
       displayName: displayName || undefined,
       accentColor: accentColor || undefined,
     };
-    if (platform === 'twitch') {
+    if (platform !== 'youtube') {
       args.login = login;
     } else {
       args.login = youtubeLogin;
@@ -165,12 +168,15 @@ export default function StreamersManager({ initialStreamers }: Props) {
             >
               <option value="twitch">Twitch</option>
               <option value="youtube">YouTube</option>
+              <option value="kick">Kick</option>
             </select>
           </div>
 
-          {platform === 'twitch' ? (
+          {platform !== 'youtube' ? (
             <div>
-              <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">Login (usuario)</label>
+              <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">
+                {platform === 'kick' ? 'Usuario (kick.com/…)' : 'Login (usuario)'}
+              </label>
               <input
                 type="text"
                 value={login}
@@ -259,7 +265,7 @@ export default function StreamersManager({ initialStreamers }: Props) {
               key={s._id}
               className="p-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-4"
               style={{
-                borderLeftColor: s.accentColor || (s.platform === 'twitch' ? '#9146FF' : '#FF0000'),
+                borderLeftColor: s.accentColor || PLATFORM_COLOR[s.platform],
                 borderLeftWidth: 4,
               }}
             >
@@ -267,9 +273,9 @@ export default function StreamersManager({ initialStreamers }: Props) {
                 <img
                   src={
                     s.profileImageUrl ||
-                    (s.platform === 'twitch'
-                      ? `https://unavatar.io/twitch/${s.platformLogin}`
-                      : `https://unavatar.io/youtube/${s.platformLogin}`)
+                    (s.platform === 'kick'
+                      ? undefined
+                      : `https://unavatar.io/${s.platform}/${s.platformLogin}`)
                   }
                   alt={s.platformLogin}
                   className="w-10 h-10 rounded-full shrink-0 object-cover bg-white/10"
@@ -338,7 +344,11 @@ export default function StreamersManager({ initialStreamers }: Props) {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs uppercase tracking-widest text-gray-500 mb-1">
-                  {editState.streamer.platform === 'twitch' ? 'Login (usuario Twitch)' : 'Channel ID (UC...)'}
+                  {editState.streamer.platform === 'twitch'
+                    ? 'Login (usuario Twitch)'
+                    : editState.streamer.platform === 'kick'
+                      ? 'Usuario (kick.com/…)'
+                      : 'Channel ID (UC...)'}
                 </label>
                 <input
                   type="text"

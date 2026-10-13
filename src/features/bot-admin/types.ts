@@ -1,4 +1,4 @@
-export type Platform = 'twitch' | 'youtube';
+export type Platform = 'twitch' | 'youtube' | 'kick';
 
 export type ConversationalMode = 'off' | 'passive' | 'helpful' | 'chatty';
 
